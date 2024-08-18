@@ -5,10 +5,12 @@ public class TerrainGeneration : GenerationStep{
     [SerializeField] private float perlinSmoothness;
     [SerializeField] private float maxHeight, minHeight;
     [SerializeField] private int dirtThickness;
-    public override float Perform(BlockType[,] worldGrid){
+    public override float Perform(BlockType[,] worldGrid, int seed){
         int worldHeight = worldGrid.GetLength(WorldGenerator.Y);
         for (int i = worldGrid.GetLength(WorldGenerator.X)-1; i >= 0; i--){
-            int elevation = (int)(worldHeight * (minHeight + (maxHeight-minHeight)*Mathf.PerlinNoise1D(i/perlinSmoothness)));
+            float noise = Mathf.PerlinNoise(i / perlinSmoothness, seed);
+            
+            int elevation = (int)(worldHeight * (minHeight + (maxHeight-minHeight)*noise));
             int j;
             for (j = worldHeight-1; j > elevation; j--){
                 worldGrid[i, j] = BlockType.Air;

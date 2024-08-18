@@ -1,11 +1,14 @@
 using System;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour {
     public const int X = 0, Y = 1;
 
+    private const int MaxSeed = int.MaxValue/2;
     [SerializeField] private Sprite square;
+    [SerializeField] private int seed;
     [SerializeField] private string worldSizeName;
     [SerializeField] private WorldSize[] worldSizes;
     [SerializeField] private GenerationStep[] generationSteps;
@@ -16,6 +19,9 @@ public class WorldGenerator : MonoBehaviour {
         GenerateWorld();
     }
     private void GenerateWorld(){
+        if (seed == -1){
+            seed = (int)(MaxSeed*Random.value);
+        }
         WorldSize worldSize = worldSizes[0];
         foreach (WorldSize size in worldSizes){
             if (!size.name.Equals(worldSizeName)){
@@ -31,7 +37,7 @@ public class WorldGenerator : MonoBehaviour {
             float stepProgress = 0;
             while (stepProgress < 1){
                 float previousStepProgress = stepProgress;
-                stepProgress = generationStep.Perform(worldGrid);
+                stepProgress = generationStep.Perform(worldGrid, seed);
                 generationProgressCompleted += (stepProgress - previousStepProgress)*generationStep.RelativeTimeToPerform;
                 print($"Progress: {generationProgressCompleted/generationProgressNeeded}");
             }
