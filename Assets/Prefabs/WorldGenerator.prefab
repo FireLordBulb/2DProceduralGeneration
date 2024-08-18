@@ -56,4 +56,5 @@ MonoBehaviour:
   - width: 300
     height: 150
     name: Big
-  generationSteps: []
+  generationSteps:
+  - {fileID: 11400000, guid: 1938f2511ddd29245a29d3494a0eee53, type: 2}

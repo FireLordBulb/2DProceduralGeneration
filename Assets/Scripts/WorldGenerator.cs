@@ -1,17 +1,14 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 
-public class WorldGenerator : MonoBehaviour{
+public class WorldGenerator : MonoBehaviour {
+    public const int X = 0, Y = 1;
+
     [SerializeField] private Sprite square;
     [SerializeField] private string worldSizeName;
     [SerializeField] private WorldSize[] worldSizes;
     [SerializeField] private GenerationStep[] generationSteps;
-
-    private static int X = 0, Y = 1;
     
     private BlockType[,] worldGrid;
     
@@ -46,7 +43,7 @@ public class WorldGenerator : MonoBehaviour{
                 if (blockType == BlockType.Air){
                     continue;
                 }
-                GameObject gridSquare = new("gridSquare"){
+                GameObject gridSquare = new($"GridSquare({i}, {j})"){
                     transform = {
                         position = new Vector3(i, j) - center
                     }
@@ -55,12 +52,12 @@ public class WorldGenerator : MonoBehaviour{
                 spriteRenderer.sprite = square;
                 spriteRenderer.color = blockType switch {
                     BlockType.Rock => Color.gray,
-                    BlockType.Dirt => new Color(165, 42, 42),
+                    BlockType.Dirt => new Color(0.38f, 0.18f, 0.12f),
                     BlockType.Grass => Color.green,
-                    BlockType.Sand => new Color(255, 240, 134),
+                    BlockType.Sand => new Color(1f, 0.94f, 0.53f),
                     BlockType.Water => Color.blue,
-                    BlockType.DirtWall => new Color(80, 20, 20),
-                    BlockType.RockWall => new Color(100, 100, 100),
+                    BlockType.DirtWall => new Color(0.19f, 0.09f, 0.06f),
+                    BlockType.RockWall => new Color(0.4f, 0.4f, 0.4f),
                     _ => spriteRenderer.color
                 };
             }
