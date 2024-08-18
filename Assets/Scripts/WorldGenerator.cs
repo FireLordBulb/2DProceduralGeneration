@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour{
+    [SerializeField] private Sprite square;
     [SerializeField] private string worldSizeName;
     [SerializeField] private WorldSize[] worldSizes;
     [SerializeField] private GenerationStep[] generationSteps;
@@ -38,14 +39,20 @@ public class WorldGenerator : MonoBehaviour{
                 print($"Progress: {generationProgressCompleted/generationProgressNeeded}");
             }
         }
+        Vector3 center = new Vector3(worldGrid.GetLength(X), worldGrid.GetLength(Y))/2;
         for (int i = worldGrid.GetLength(X)-1; i >= 0; i--){
             for (int j = worldGrid.GetLength(Y)-1; j >= 0; j--){
                 BlockType blockType = worldGrid[i, j];
                 if (blockType == BlockType.Air){
                     continue;
                 }
-                GameObject gridSquare = Instantiate(new GameObject(), new Vector3(i, j), Quaternion.identity);
+                GameObject gridSquare = new("gridSquare"){
+                    transform = {
+                        position = new Vector3(i, j) - center
+                    }
+                };
                 SpriteRenderer spriteRenderer = gridSquare.AddComponent<SpriteRenderer>();
+                spriteRenderer.sprite = square;
                 spriteRenderer.color = blockType switch {
                     BlockType.Rock => Color.gray,
                     BlockType.Dirt => new Color(165, 42, 42),
