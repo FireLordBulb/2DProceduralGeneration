@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "GenerationSteps/TerrainGeneration", fileName = "TerrainGeneration")]
 public class TerrainGeneration : GenerationStep {
@@ -16,13 +15,15 @@ public class TerrainGeneration : GenerationStep {
         float maxHeightAboveUnderground = worldHeightAboveUnderground*maxHeightAboveUndergroundFraction;
         for (int x = elevations.Length-1; x >= 0; x--){
             float noise = (1+OpenSimplex2S.Noise2(seed, x /noiseSmoothness /worldHeightAboveUnderground, 0))/2;
+            // Square the magnitude of noise, making more of it be closer to 0.
+            noise *= Math.Abs(noise);
             elevations[x] = worldSize.undergroundTopY+(int)(maxHeightAboveUnderground*noise);
         }
-        foreach (TerrainModificationCurve terrainModificationCurve in terrainModificationCurves){
+        foreach (TerrainModificationCurve curve in terrainModificationCurves){
             seed.Increment();
             for (int x = elevations.Length-1; x >= 0; x--){
-                float noise = OpenSimplex2S.Noise2(seed, x /terrainModificationCurve.noiseSmoothness, 0);
-                elevations[x] += (int)(terrainModificationCurve.maxBlockDifference*noise);
+                float noise = OpenSimplex2S.Noise2(seed, x /curve.noiseSmoothness, 0);
+                elevations[x] += (int)(curve.maxBlockDifference*noise);
             } 
         }
         for (int x = elevations.Length - 1; x >= 0; x--){

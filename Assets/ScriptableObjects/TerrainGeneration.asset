@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: TerrainGeneration
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 2
-  noiseSmoothness: 0.8
-  maxHeightAboveUndergroundFraction: 0.7
+  noiseSmoothness: 1.5
+  maxHeightAboveUndergroundFraction: 0.6
   terrainModificationCurves:
   - noiseSmoothness: 20
-    maxBlockDifference: 5
+    maxBlockDifference: 3
+  - noiseSmoothness: 50
+    maxBlockDifference: 7
   dirtThickness: 6
