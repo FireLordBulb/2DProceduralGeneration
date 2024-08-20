@@ -1,14 +1,13 @@
 using System;
 using System.Linq;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour {
     public const int X = 0, Y = 1;
 
-    private const int MaxSeed = int.MaxValue/2;
     [SerializeField] private Sprite square;
-    [SerializeField] private int seed;
+    [SerializeField] private bool useRandomSeed;
+    [SerializeField] private long seed;
     [SerializeField] private string worldSizeName;
     [SerializeField] private WorldSize[] worldSizes;
     [SerializeField] private GenerationStep[] generationSteps;
@@ -19,8 +18,10 @@ public class WorldGenerator : MonoBehaviour {
         GenerateWorld();
     }
     private void GenerateWorld(){
-        if (seed == -1){
-            seed = (int)(MaxSeed*Random.value);
+        if (useRandomSeed){
+            byte[] longBytes = new byte[sizeof(long)];
+            new System.Random().NextBytes(longBytes);
+            seed = BitConverter.ToInt64(longBytes);
         }
         WorldSize worldSize = worldSizes[0];
         foreach (WorldSize size in worldSizes){
@@ -41,6 +42,8 @@ public class WorldGenerator : MonoBehaviour {
                 generationProgressCompleted += (stepProgress - previousStepProgress)*generationStep.RelativeTimeToPerform;
                 print($"Progress: {generationProgressCompleted/generationProgressNeeded}");
             }
+            // Pass a different seed to each step to ensure each step has unique random noise.
+            seed++;
         }
         Vector3 center = new Vector3(worldGrid.GetLength(X), worldGrid.GetLength(Y))/2;
         for (int i = worldGrid.GetLength(X)-1; i >= 0; i--){

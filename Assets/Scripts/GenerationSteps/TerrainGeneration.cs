@@ -1,27 +1,29 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "GenerationSteps/TerrainGeneration", fileName = "TerrainGeneration")]
-public class TerrainGeneration : GenerationStep{
-    [SerializeField] private float perlinSmoothness;
+public class TerrainGeneration : GenerationStep {
+    [SerializeField] private float noiseSmoothness;
     [SerializeField] private float maxHeight, minHeight;
     [SerializeField] private int dirtThickness;
-    public override float Perform(BlockType[,] worldGrid, int seed){
+    public override float Perform(BlockType[,] worldGrid, long seed){
         int worldHeight = worldGrid.GetLength(WorldGenerator.Y);
-        for (int i = worldGrid.GetLength(WorldGenerator.X)-1; i >= 0; i--){
-            float noise = Mathf.PerlinNoise(i / perlinSmoothness, seed);
-            
-            int elevation = (int)(worldHeight * (minHeight + (maxHeight-minHeight)*noise));
-            int j;
-            for (j = worldHeight-1; j > elevation; j--){
-                worldGrid[i, j] = BlockType.Air;
-            }
-            worldGrid[i, j] = BlockType.Grass;
-            j--;
-            for (; j > elevation-dirtThickness; j--){
-                worldGrid[i, j] = BlockType.Dirt;
-            }
-            for (; j >= 0; j--){
-                worldGrid[i, j] = BlockType.Rock;
+        float heightRange = maxHeight - minHeight;
+        for (int x = worldGrid.GetLength(WorldGenerator.X)-1; x >= 0; x--){
+            float noise = OpenSimplex2S.Noise2(seed, x / noiseSmoothness, 0);
+            int elevation = (int)(worldHeight*(minHeight + heightRange*noise));
+            {
+                int y = worldHeight-1;
+                for (; y > elevation; y--){
+                    worldGrid[x, y] = BlockType.Air;
+                }
+                worldGrid[x, y] = BlockType.Grass;
+                y--;
+                for (; y > elevation - dirtThickness; y--){
+                    worldGrid[x, y] = BlockType.Dirt;
+                }
+                for (; y >= 0; y--){
+                    worldGrid[x, y] = BlockType.Rock;
+                }
             }
         }
         return 1;

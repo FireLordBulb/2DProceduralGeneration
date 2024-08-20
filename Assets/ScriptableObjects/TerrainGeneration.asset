@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TerrainGeneration
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 2
-  perlinSmoothness: 10
+  noiseSmoothness: 25
   maxHeight: 0.8
   minHeight: 0.6
   dirtThickness: 7
