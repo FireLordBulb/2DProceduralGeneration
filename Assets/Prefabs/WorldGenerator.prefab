@@ -49,14 +49,17 @@ MonoBehaviour:
   seed: 526169754230076738
   worldSizeName: Medium
   worldSizes:
-  - width: 100
-    height: 50
+  - width: 200
+    height: 160
+    undergroundTopY: 96
     name: Small
   - width: 500
-    height: 250
+    height: 300
+    undergroundTopY: 180
     name: Medium
   - width: 1000
     height: 400
+    undergroundTopY: 280
     name: Big
   generationSteps:
   - {fileID: 11400000, guid: 1938f2511ddd29245a29d3494a0eee53, type: 2}

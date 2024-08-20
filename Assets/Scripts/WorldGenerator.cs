@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class WorldGenerator : MonoBehaviour {
     public const int X = 0, Y = 1;
@@ -13,6 +14,7 @@ public class WorldGenerator : MonoBehaviour {
     [SerializeField] private GenerationStep[] generationSteps;
     
     private BlockType[,] worldGrid;
+    private Seed seedReference;
     
     private void Start(){
         GenerateWorld();
@@ -23,6 +25,7 @@ public class WorldGenerator : MonoBehaviour {
             new System.Random().NextBytes(longBytes);
             seed = BitConverter.ToInt64(longBytes);
         }
+        seedReference = new Seed(seed);
         WorldSize worldSize = worldSizes[0];
         foreach (WorldSize size in worldSizes){
             if (!size.name.Equals(worldSizeName)){
@@ -38,12 +41,12 @@ public class WorldGenerator : MonoBehaviour {
             float stepProgress = 0;
             while (stepProgress < 1){
                 float previousStepProgress = stepProgress;
-                stepProgress = generationStep.Perform(worldGrid, seed);
+                stepProgress = generationStep.Perform(worldGrid, worldSize, seedReference);
                 generationProgressCompleted += (stepProgress - previousStepProgress)*generationStep.RelativeTimeToPerform;
                 print($"Progress: {generationProgressCompleted/generationProgressNeeded}");
             }
             // Pass a different seed to each step to ensure each step has unique random noise.
-            seed++;
+            seedReference.Increment();
         }
         Vector3 center = new Vector3(worldGrid.GetLength(X), worldGrid.GetLength(Y))/2;
         for (int i = worldGrid.GetLength(X)-1; i >= 0; i--){
@@ -72,11 +75,11 @@ public class WorldGenerator : MonoBehaviour {
             }
         }
     }
-    
 }
 
 [Serializable]
 public struct WorldSize {
     public int width, height;
+    public int undergroundTopY;
     public string name;
 }
