@@ -5,6 +5,6 @@ public enum BlockType : byte {
     Grass,
     Sand,
     Water,
-    DirtWall,
-    RockWall
+    RockWall,
+    DirtWall
 }

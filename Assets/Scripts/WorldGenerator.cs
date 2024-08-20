@@ -1,21 +1,27 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Serialization;
+using UnityEngine.Tilemaps;
 
 public class WorldGenerator : MonoBehaviour {
     public const int X = 0, Y = 1;
 
-    [SerializeField] private Sprite square;
+    [SerializeField] private Grid grid;
+    [SerializeField] private List<BlockTilePair> blockTilePairs;
     [SerializeField] private bool useRandomSeed;
     [SerializeField] private long seed;
     [SerializeField] private string worldSizeName;
     [SerializeField] private WorldSize[] worldSizes;
     [SerializeField] private GenerationStep[] generationSteps;
     
+    private readonly Dictionary<BlockType, Tile> tileDictionary = new();
     private BlockType[,] worldGrid;
     private Seed seedReference;
-    
+
+    private void Awake(){
+        blockTilePairs.ForEach(pair => tileDictionary.Add(pair.block, pair.tile));
+    }
     private void Start(){
         GenerateWorld();
     }
@@ -48,33 +54,28 @@ public class WorldGenerator : MonoBehaviour {
             // Pass a different seed to each step to ensure each step has unique random noise.
             seedReference.Increment();
         }
-        Vector3 center = new Vector3(worldGrid.GetLength(X), worldGrid.GetLength(Y))/2;
-        for (int i = worldGrid.GetLength(X)-1; i >= 0; i--){
-            for (int j = worldGrid.GetLength(Y)-1; j >= 0; j--){
-                BlockType blockType = worldGrid[i, j];
-                if (blockType == BlockType.Air){
-                    continue;
-                }
-                GameObject gridSquare = new($"GridSquare({i}, {j})"){
-                    transform = {
-                        position = new Vector3(i, j) - center
+        Instantiate(grid);
+        Tilemap tilemap = grid.GetComponentInChildren<Tilemap>();
+        for (int x = worldGrid.GetLength(X)-1; x >= 0; x--){
+            for (int y = worldGrid.GetLength(Y)-1; y >= 0; y--){
+                BlockType blockType = worldGrid[x, y];
+                if (tileDictionary.TryGetValue(blockType, out Tile tile)){
+                    // A blockType with a null tile means don't put any tile at this location.
+                    if (tile != null){
+                        tilemap.SetTile(new Vector3Int(x, y), tile);
                     }
-                };
-                SpriteRenderer spriteRenderer = gridSquare.AddComponent<SpriteRenderer>();
-                spriteRenderer.sprite = square;
-                spriteRenderer.color = blockType switch {
-                    BlockType.Rock => Color.gray,
-                    BlockType.Dirt => new Color(0.38f, 0.18f, 0.12f),
-                    BlockType.Grass => Color.green,
-                    BlockType.Sand => new Color(1f, 0.94f, 0.53f),
-                    BlockType.Water => Color.blue,
-                    BlockType.DirtWall => new Color(0.19f, 0.09f, 0.06f),
-                    BlockType.RockWall => new Color(0.4f, 0.4f, 0.4f),
-                    _ => spriteRenderer.color
-                };
+                } else {
+                    Debug.LogError($"{blockType} has no matching tile!");
+                }
             }
         }
     }
+}
+
+[Serializable]
+public struct BlockTilePair {
+    public BlockType block;
+    public Tile tile;
 }
 
 [Serializable]
