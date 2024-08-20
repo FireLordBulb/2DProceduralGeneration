@@ -9,7 +9,7 @@ public class TerrainGeneration : GenerationStep {
         int worldHeight = worldGrid.GetLength(WorldGenerator.Y);
         float heightRange = maxHeight - minHeight;
         for (int x = worldGrid.GetLength(WorldGenerator.X)-1; x >= 0; x--){
-            float noise = OpenSimplex2S.Noise2(seed, x / noiseSmoothness, 0);
+            float noise = OpenSimplex2S.Noise2(seed, x /noiseSmoothness /worldHeight, 0);
             int elevation = (int)(worldHeight*(minHeight + heightRange*noise));
             {
                 int y = worldHeight-1;
