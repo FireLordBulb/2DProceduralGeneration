@@ -54,7 +54,7 @@ public class WorldGenerator : MonoBehaviour {
             // Pass a different seed to each step to ensure each step has unique random noise.
             seedReference.Increment();
         }
-        Instantiate(grid);
+        grid = Instantiate(grid);
         Tilemap tilemap = grid.GetComponentInChildren<Tilemap>();
         for (int x = worldGrid.GetLength(X)-1; x >= 0; x--){
             for (int y = worldGrid.GetLength(Y)-1; y >= 0; y--){
