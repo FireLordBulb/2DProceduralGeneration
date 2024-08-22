@@ -29,7 +29,6 @@ public class TerrainGeneration : GenerationStep {
             elevations[x] = Math.Clamp(elevations[x], 0, y);
             FillColumn(worldGrid, x, y,
                 new BlockSection(elevations[x], BlockType.Air),
-                new BlockSection(Math.Max(elevations[x]-1, 0), BlockType.Grass),
                 new BlockSection(Math.Max(elevations[x]-dirtThickness, 0), BlockType.Dirt),
                 new BlockSection(0, BlockType.Rock)
             );
