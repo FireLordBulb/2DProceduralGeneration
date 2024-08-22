@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Oceans
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
-  waterWidth: 50
-  waterDepth: 20
-  seaBedThickness: 10
-  beachWidth: 25
-  beachDepth: 15
+  waterWidth: 100
+  waterDepth: 40
+  seaBedThickness: 15
+  beachWidth: 40
+  beachDepth: 25

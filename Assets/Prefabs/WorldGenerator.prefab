@@ -80,3 +80,4 @@ MonoBehaviour:
     name: Big
   generationSteps:
   - {fileID: 11400000, guid: 1938f2511ddd29245a29d3494a0eee53, type: 2}
+  - {fileID: 11400000, guid: 133dccd06aeb5aa4e867230c73c3d604, type: 2}
