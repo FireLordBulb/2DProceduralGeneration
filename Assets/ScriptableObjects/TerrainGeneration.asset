@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 2
   noiseSmoothness: 1.5
-  maxHeightAboveUndergroundFraction: 0.6
+  maxHeightFraction: 0.6
   terrainModificationCurves:
   - noiseSmoothness: 20
     maxBlockDifference: 3

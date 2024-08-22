@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 public class WorldGenerator : MonoBehaviour {
@@ -81,6 +82,6 @@ public struct BlockTilePair {
 [Serializable]
 public struct WorldSize {
     public int width, height;
-    public int undergroundTopY;
+    public int seaLevel;
     public string name;
 }
