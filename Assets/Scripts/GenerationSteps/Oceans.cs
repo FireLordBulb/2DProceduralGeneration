@@ -32,6 +32,7 @@ public class Oceans : GenerationStep {
             } else for (; y > sandElevation; y--){
                 worldGrid[x, y] = BlockType.Air;
             }
+            elevations[x] = y;
             for (; y > sandElevation-beachDepth; y--){
                 worldGrid[x, y] = BlockType.Sand;
             }
@@ -51,6 +52,7 @@ public class Oceans : GenerationStep {
             } else for (; y > worldSize.seaLevel; y--){
                 worldGrid[x, y] = BlockType.Air;
             }
+            elevations[x] = y;
             for (; y > localWaterBottom; y--){
                 worldGrid[x, y] = BlockType.Water;
             }
