@@ -24,22 +24,15 @@ public class TerrainGeneration : GenerationStep {
                 elevations[x] += (int)(curve.maxBlockDifference*noise);
             } 
         }
-        for (int x = elevations.Length - 1; x >= 0; x--){
-            int elevation = Math.Max(elevations[x], 0);
-            int y = worldSize.height - 1;
-            for (; y > elevation; y--){
-                worldGrid[x, y] = BlockType.Air;
-            }
-            worldGrid[x, y] = BlockType.Grass;
-            y--;
-            int lowestDirtY = elevation - dirtThickness;
-            lowestDirtY = Math.Max(lowestDirtY, 0);
-            for (; y >= lowestDirtY; y--){
-                worldGrid[x, y] = BlockType.Dirt;
-            }
-            for (; y >= 0; y--){
-                worldGrid[x, y] = BlockType.Rock;
-            }
+        for (int x = elevations.Length-1; x >= 0; x--){
+            int y = worldSize.height-1;
+            elevations[x] = Math.Clamp(elevations[x], 0, y);
+            FillColumn(worldGrid, x, y,
+                new BlockSection(elevations[x], BlockType.Air),
+                new BlockSection(Math.Max(elevations[x]-1, 0), BlockType.Grass),
+                new BlockSection(Math.Max(elevations[x]-dirtThickness, 0), BlockType.Dirt),
+                new BlockSection(0, BlockType.Rock)
+            );
         }
         return 1;
     }

@@ -10,60 +10,41 @@ public class Oceans : GenerationStep {
     [SerializeField] private int seaBedThickness;
     [SerializeField] private int beachDepth;
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
-        CreateOcean(worldGrid, elevations, worldSize, seed, Left);
-        CreateOcean(worldGrid, elevations, worldSize, seed, Right);
+        CreateOcean(worldGrid, elevations, worldSize, Left);
+        CreateOcean(worldGrid, elevations, worldSize, Right);
         return 1;
     }
 
-    private void CreateOcean(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed, int side){
-        int seaLevel = worldSize.seaLevel;
+    private void CreateOcean(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, int side){
         int waterWidth = (int)(oceanWidthFraction*worldSize.width);
-        float beachWidthFloat = beachWidthFraction*worldSize.width;
-        int beachWidth = (int)beachWidthFloat;
+        int beachWidth = (int)(beachWidthFraction*worldSize.width);
         int waterDepth = (int)(waterWidth*depthPerWidth);
-        int edge = side == Left ? -1 : worldSize.width;
-        int x = edge - side*(waterWidth+beachWidth);
-        for (int i = 0; i < beachWidth; i++){
-            float closenessToWater = i/beachWidthFloat;
-            int y = elevations[x];
-            int sandElevation = (int)(seaLevel*closenessToWater + y*(1-closenessToWater));
-            if (y < sandElevation){
-                y = sandElevation;
-            } else for (; y > sandElevation; y--){
-                worldGrid[x, y] = BlockType.Air;
-            }
-            elevations[x] = y;
-            for (; y > sandElevation-beachDepth; y--){
-                worldGrid[x, y] = BlockType.Sand;
-            }
-            while (worldGrid[x, y] != BlockType.Rock){
-                worldGrid[x, y] = BlockType.Rock;
-                y--;
-            }
-            x += side;
-        }
         float anglePerBlock = QuarterTurn/waterWidth;
-        for (int i = 0; i < waterWidth; i++){
-            int localWaterBottom = seaLevel-(int)(waterDepth * Mathf.Sin(i*anglePerBlock));
-            int localSeaBedBottom = Mathf.Min(localWaterBottom - seaBedThickness, seaLevel-beachDepth);
-            int y = elevations[x];
-            if (y < seaLevel){
-                y = seaLevel;
-            } else for (; y > worldSize.seaLevel; y--){
-                worldGrid[x, y] = BlockType.Air;
+        int x = side == Left ? 0 : worldSize.width-1;
+        for (int i = waterWidth+beachWidth; i > 0; i--){
+            int surfaceElevation, waterBottom;
+            // Values for the ocean.
+            if (i > beachWidth){
+                surfaceElevation = worldSize.seaLevel;
+                waterBottom = surfaceElevation - (int)(waterDepth * Mathf.Sin((i-beachWidth)*anglePerBlock));
+            // Values for the beach part.
+            } else {
+                surfaceElevation = elevations[x] + (worldSize.seaLevel-elevations[x])*i/beachWidth;
+                // Makes the water layer's height 0, so there's no water on the beach.
+                waterBottom = surfaceElevation;
             }
-            elevations[x] = y;
-            for (; y > localWaterBottom; y--){
-                worldGrid[x, y] = BlockType.Water;
+            int bottomY = Mathf.Min(waterBottom-seaBedThickness, surfaceElevation-beachDepth);
+            FillColumn(worldGrid, x, Mathf.Max(elevations[x], surfaceElevation), 
+                new BlockSection(surfaceElevation, BlockType.Air),
+                new BlockSection(waterBottom, BlockType.Water),
+                new BlockSection(bottomY, BlockType.Sand)
+            );
+            elevations[x] = surfaceElevation;
+            while (worldGrid[x, bottomY] != BlockType.Rock){
+                worldGrid[x, bottomY] = BlockType.Rock;
+                bottomY--;
             }
-            for (; y > localSeaBedBottom; y--){
-                worldGrid[x, y] = BlockType.Sand;
-            }
-            while (worldGrid[x, y] != BlockType.Rock){
-                worldGrid[x, y] = BlockType.Rock;
-                y--;
-            }
-            x += side;
+            x -= side;
         }
     }
 }
