@@ -18,6 +18,7 @@ public class WorldGenerator : MonoBehaviour {
     
     private readonly Dictionary<BlockType, Tile> tileDictionary = new();
     private BlockType[,] worldGrid;
+    private int[] elevations;
     private Seed seedReference;
 
     private void Awake(){
@@ -42,13 +43,14 @@ public class WorldGenerator : MonoBehaviour {
             break;
         }
         worldGrid = new BlockType[worldSize.width, worldSize.height];
+        elevations = new int[worldSize.width];
         float generationProgressNeeded = generationSteps.Sum(generationStep => generationStep.RelativeTimeToPerform);
         float generationProgressCompleted = 0;
         foreach (GenerationStep generationStep in generationSteps){
             float stepProgress = 0;
             while (stepProgress < 1){
                 float previousStepProgress = stepProgress;
-                stepProgress = generationStep.Perform(worldGrid, worldSize, seedReference);
+                stepProgress = generationStep.Perform(worldGrid, elevations, worldSize, seedReference);
                 generationProgressCompleted += (stepProgress - previousStepProgress)*generationStep.RelativeTimeToPerform;
                 print($"Progress: {generationProgressCompleted/generationProgressNeeded}");
             }

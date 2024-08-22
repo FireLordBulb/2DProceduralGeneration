@@ -5,5 +5,5 @@ public abstract class GenerationStep : ScriptableObject{
 
     public float RelativeTimeToPerform => relativeTimeToPerform;
 
-    public abstract float Perform(BlockType[,] worldGrid, WorldSize worldSize, Seed seed);
+    public abstract float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed);
 }

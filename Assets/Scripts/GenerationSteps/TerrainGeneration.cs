@@ -8,9 +8,7 @@ public class TerrainGeneration : GenerationStep {
     [SerializeField] private float maxHeightFraction;
     [SerializeField] private TerrainModificationCurve[] terrainModificationCurves;
     [SerializeField] private int dirtThickness;
-    private int[] elevations;
-    public override float Perform(BlockType[,] worldGrid, WorldSize worldSize, Seed seed){
-        elevations = new int[worldSize.width];
+    public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         int worldHeightAboveUnderground = worldSize.height-worldSize.seaLevel;
         float maxHeight = worldHeightAboveUnderground*maxHeightFraction;
         for (int x = elevations.Length-1; x >= 0; x--){
@@ -28,21 +26,19 @@ public class TerrainGeneration : GenerationStep {
         }
         for (int x = elevations.Length - 1; x >= 0; x--){
             int elevation = Math.Max(elevations[x], 0);
-            {
-                int y = worldSize.height-1;
-                for (; y > elevation; y--){
-                    worldGrid[x, y] = BlockType.Air;
-                }
-                worldGrid[x, y] = BlockType.Grass;
-                y--;
-                int lowestDirtY = elevation-dirtThickness;
-                lowestDirtY = Math.Max(lowestDirtY, 0);
-                for (; y >= lowestDirtY; y--){
-                    worldGrid[x, y] = BlockType.Dirt;
-                }
-                for (; y >= 0; y--){
-                    worldGrid[x, y] = BlockType.Rock;
-                }
+            int y = worldSize.height - 1;
+            for (; y > elevation; y--){
+                worldGrid[x, y] = BlockType.Air;
+            }
+            worldGrid[x, y] = BlockType.Grass;
+            y--;
+            int lowestDirtY = elevation - dirtThickness;
+            lowestDirtY = Math.Max(lowestDirtY, 0);
+            for (; y >= lowestDirtY; y--){
+                worldGrid[x, y] = BlockType.Dirt;
+            }
+            for (; y >= 0; y--){
+                worldGrid[x, y] = BlockType.Rock;
             }
         }
         return 1;

@@ -9,13 +9,13 @@ public class Oceans : GenerationStep {
     [SerializeField] private float depthPerWidth;
     [SerializeField] private int seaBedThickness;
     [SerializeField] private int beachDepth;
-    public override float Perform(BlockType[,] worldGrid, WorldSize worldSize, Seed seed){
-        CreateOcean(worldGrid, worldSize, seed, Left);
-        CreateOcean(worldGrid, worldSize, seed, Right);
+    public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
+        CreateOcean(worldGrid, elevations, worldSize, seed, Left);
+        CreateOcean(worldGrid, elevations, worldSize, seed, Right);
         return 1;
     }
 
-    private void CreateOcean(BlockType[,] worldGrid, WorldSize worldSize, Seed seed, int side){
+    private void CreateOcean(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed, int side){
         int seaLevel = worldSize.seaLevel;
         int waterWidth = (int)(oceanWidthFraction*worldSize.width);
         float beachWidthFloat = beachWidthFraction*worldSize.width;
@@ -24,17 +24,20 @@ public class Oceans : GenerationStep {
         int edge = side == Left ? -1 : worldSize.width;
         int x = edge - side*(waterWidth+beachWidth);
         for (int i = 0; i < beachWidth; i++){
-            int y = worldSize.height-1;
-            int sandElevation = seaLevel;
-            for (; y > sandElevation; y--){
-                if (sandElevation == seaLevel && worldGrid[x, y] != BlockType.Air){
-                    float closenessToWater = i/beachWidthFloat;
-                    sandElevation = (int)(seaLevel*closenessToWater + y*(1-closenessToWater));
-                }
+            float closenessToWater = i/beachWidthFloat;
+            int y = elevations[x];
+            int sandElevation = (int)(seaLevel*closenessToWater + y*(1-closenessToWater));
+            if (y < sandElevation){
+                y = sandElevation;
+            } else for (; y > sandElevation; y--){
                 worldGrid[x, y] = BlockType.Air;
             }
             for (; y > sandElevation-beachDepth; y--){
                 worldGrid[x, y] = BlockType.Sand;
+            }
+            while (worldGrid[x, y] != BlockType.Rock){
+                worldGrid[x, y] = BlockType.Rock;
+                y--;
             }
             x += side;
         }
@@ -42,8 +45,10 @@ public class Oceans : GenerationStep {
         for (int i = 0; i < waterWidth; i++){
             int localWaterBottom = seaLevel-(int)(waterDepth * Mathf.Sin(i*anglePerBlock));
             int localSeaBedBottom = Mathf.Min(localWaterBottom - seaBedThickness, seaLevel-beachDepth);
-            int y = worldSize.height-1;
-            for (; y > worldSize.seaLevel; y--){
+            int y = elevations[x];
+            if (y < seaLevel){
+                y = seaLevel;
+            } else for (; y > worldSize.seaLevel; y--){
                 worldGrid[x, y] = BlockType.Air;
             }
             for (; y > localWaterBottom; y--){
@@ -51,6 +56,10 @@ public class Oceans : GenerationStep {
             }
             for (; y > localSeaBedBottom; y--){
                 worldGrid[x, y] = BlockType.Sand;
+            }
+            while (worldGrid[x, y] != BlockType.Rock){
+                worldGrid[x, y] = BlockType.Rock;
+                y--;
             }
             x += side;
         }
