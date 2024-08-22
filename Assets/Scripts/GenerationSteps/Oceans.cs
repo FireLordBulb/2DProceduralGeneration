@@ -5,9 +5,10 @@ public class Oceans : GenerationStep {
     private const int Left = -1, Right = +1;
     private const float QuarterTurn = Mathf.PI/2;
     
-    [SerializeField] private int waterWidth, waterDepth;
+    [SerializeField] private float oceanWidthFraction, beachWidthFraction;
+    [SerializeField] private float depthPerWidth;
     [SerializeField] private int seaBedThickness;
-    [SerializeField] private int beachWidth, beachDepth;
+    [SerializeField] private int beachDepth;
     public override float Perform(BlockType[,] worldGrid, WorldSize worldSize, Seed seed){
         CreateOcean(worldGrid, worldSize, seed, Left);
         CreateOcean(worldGrid, worldSize, seed, Right);
@@ -16,6 +17,9 @@ public class Oceans : GenerationStep {
 
     private void CreateOcean(BlockType[,] worldGrid, WorldSize worldSize, Seed seed, int side){
         int seaLevel = worldSize.seaLevel;
+        int waterWidth = (int)(oceanWidthFraction*worldSize.width);
+        int beachWidth = (int)(beachWidthFraction*worldSize.width);
+        int waterDepth = (int)(waterWidth*depthPerWidth);
         int edge = side == Left ? -1 : worldSize.width;
         int x = edge - side*(waterWidth+beachWidth);
         for (int i = 0; i < beachWidth; i++){

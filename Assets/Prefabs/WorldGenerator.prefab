@@ -66,17 +66,17 @@ MonoBehaviour:
   seed: 526169754230076738
   worldSizeName: Medium
   worldSizes:
-  - width: 200
-    height: 160
-    seaLevel: 96
-    name: Small
-  - width: 500
-    height: 300
-    seaLevel: 180
-    name: Medium
   - width: 1000
     height: 400
     seaLevel: 280
+    name: Small
+  - width: 1500
+    height: 600
+    seaLevel: 480
+    name: Medium
+  - width: 2000
+    height: 800
+    seaLevel: 680
     name: Big
   generationSteps:
   - {fileID: 11400000, guid: 1938f2511ddd29245a29d3494a0eee53, type: 2}
