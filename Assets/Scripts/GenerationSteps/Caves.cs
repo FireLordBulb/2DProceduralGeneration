@@ -1,5 +1,5 @@
 using System;
-using System.Text;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -10,7 +10,8 @@ public class Caves : GenerationStep {
     [SerializeField] private float keepDirectionWeight;
     [Range(0, 1)]
     [SerializeField] private float upwardsWeight;
-    
+
+    private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Air, BlockType.Water, BlockType.Sand};
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
@@ -25,72 +26,50 @@ public class Caves : GenerationStep {
         const int width = 6;
         const int diagonalWidth = 4;
         
-        Vector2Int previousLeftWallPosition = position+width*Vector2Int.right;
-        Vector2Int previousRightWallPosition = position-width*Vector2Int.right;
-    
+        Vector2Int leftWallPosition = position+width*Vector2Int.right;
+        Vector2Int rightWallPosition = position-width*Vector2Int.right;
         for (int i = 0; i < walkMaxSteps; i++){
-            
             Vector2Int wallOffset = (direction.sqrMagnitude == 1 ? width : diagonalWidth)*Perpendicular(direction);
-            Vector2Int leftWallPosition = position+wallOffset;
-            Vector2Int rightWallPosition = position-wallOffset;
-            if (leftWallPosition.y < 0 || leftWallPosition.x < 0 || elevations.Length-1 <= leftWallPosition.x){
+            Vector2Int newLeftWallPosition = position+wallOffset;
+            Vector2Int newRightWallPosition = position-wallOffset;
+            // Counts the rightmost x-index as outside the grid so ConnectCaveWall's "+Vector2Int.right" doesn't cause an error.
+            int xBound = elevations.Length-1;
+            if (IsOffGrid(newLeftWallPosition, xBound) || IsOffGrid(newRightWallPosition, xBound) || CaveBreakingBlocks.Contains(worldGrid[position.x, position.y])){
                 break;
             }
-            if (rightWallPosition.y < 0 || rightWallPosition.x < 0 || elevations.Length-1 <= rightWallPosition.x){
-                break;
-            }
-            // ref keyword
-            while ((leftWallPosition-previousLeftWallPosition).sqrMagnitude > 0){
-                Vector2Int difference = leftWallPosition-previousLeftWallPosition;
-                previousLeftWallPosition += GridDiagonal(difference);
-                Vector2Int caveInsidePosition = previousRightWallPosition;
-                while ((previousLeftWallPosition-caveInsidePosition).sqrMagnitude > 0){
-                    Vector2Int insideDifference = previousLeftWallPosition-caveInsidePosition;
-                    caveInsidePosition += GridDiagonal(insideDifference);
-                    MakeCaveWall(worldGrid, caveInsidePosition);
-                    MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.right);
-                    MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
-                }
-            }
-            while ((rightWallPosition-previousRightWallPosition).sqrMagnitude > 0){
-                Vector2Int difference = rightWallPosition-previousRightWallPosition;
-                previousRightWallPosition += GridDiagonal(difference);
-                Vector2Int caveInsidePosition = previousRightWallPosition;
-                while ((previousLeftWallPosition-caveInsidePosition).sqrMagnitude > 0){
-                    Vector2Int insideDifference = previousLeftWallPosition-caveInsidePosition;
-                    caveInsidePosition += GridDiagonal(insideDifference);
-                    MakeCaveWall(worldGrid, caveInsidePosition);
-                    MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.right);
-                    MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
-                }
-            }
+            leftWallPosition = ConnectCaveWall(worldGrid, newLeftWallPosition, leftWallPosition, rightWallPosition);
+            rightWallPosition = ConnectCaveWall(worldGrid, newRightWallPosition, rightWallPosition, leftWallPosition);
             position += direction;
-            if (worldGrid[position.x, position.y] == BlockType.Air || worldGrid[position.x, position.y] == BlockType.Water || worldGrid[position.x, position.y] == BlockType.Sand){
-                break;
-            }
+            
             if (Random.value < keepDirectionWeight){
                 continue;
             }
-            
-            int rightIndex = directionIndex-1;
-            int leftIndex = directionIndex+1;
-            if (rightIndex < 0){
-                directionIndex = leftIndex;
-            } else if (Directions.Length <= leftIndex){
-                directionIndex = rightIndex;
-            } else{
-                float weightedMiddlePoint = 0.5f;
-                if (0 < Directions[leftIndex].y){
-                    weightedMiddlePoint = upwardsWeight;
-                } else if (0 < Directions[rightIndex].y){
-                    weightedMiddlePoint = 1-upwardsWeight;
-                }
-                directionIndex = Random.value < weightedMiddlePoint ? leftIndex : rightIndex;
-            }
+            directionIndex = GetNewDirectionIndex(directionIndex);
             direction = Directions[directionIndex];
         }
         // TODO: Start and end circles.
         return 1;
+    }
+
+    private static bool IsOffGrid(Vector2Int position, int xBound){
+        return position.y < 0 || position.x < 0 || xBound <= position.x;
+    }
+    
+    // TODO: Compare to previous commit.
+    private static Vector2Int ConnectCaveWall(BlockType[,] worldGrid, Vector2Int newWallPosition, Vector2Int wallPosition, Vector2Int otherWallPosition){
+        while ((newWallPosition-wallPosition).sqrMagnitude > 0){
+            Vector2Int difference = newWallPosition-wallPosition;
+            wallPosition += GridDiagonal(difference);
+            Vector2Int caveInsidePosition = wallPosition;
+            while ((otherWallPosition-caveInsidePosition).sqrMagnitude > 0){
+                Vector2Int insideDifference = otherWallPosition-caveInsidePosition;
+                caveInsidePosition += GridDiagonal(insideDifference);
+                MakeCaveWall(worldGrid, caveInsidePosition);
+                MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.right);
+                MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
+            }
+        }
+        return wallPosition;
     }
 
     private static Vector2Int GridDiagonal(Vector2Int difference){
@@ -111,6 +90,24 @@ public class Caves : GenerationStep {
             BlockType.Grass => BlockType.Air,
             _ => worldGrid[position.x, position.y]
         };
+    }
+
+    private int GetNewDirectionIndex(int directionIndex){
+        int rightIndex = directionIndex-1;
+        int leftIndex = directionIndex+1;
+        if (rightIndex < 0){
+            return leftIndex;
+        }
+        if (Directions.Length <= leftIndex){
+            return rightIndex;
+        }
+        float weightedMiddlePoint = 0.5f;
+        if (0 < Directions[leftIndex].y){
+            weightedMiddlePoint = upwardsWeight;
+        } else if (0 < Directions[rightIndex].y){
+            weightedMiddlePoint = 1-upwardsWeight;
+        }
+        return Random.value < weightedMiddlePoint ? leftIndex : rightIndex;
     }
     
     // Gives counter-clockwise perpendicular. // Why doesn't this already exist for Vector2Int, Unity!!!!
