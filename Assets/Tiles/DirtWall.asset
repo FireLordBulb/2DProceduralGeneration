@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DirtWall
   m_EditorClassIdentifier: 
   m_Sprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
-  m_Color: {r: 0.19, g: 0.09, b: 0.06, a: 1}
+  m_Color: {r: 0.24, g: 0.115, b: 0.075, a: 1}
   m_Transform:
     e00: 1
     e01: 0

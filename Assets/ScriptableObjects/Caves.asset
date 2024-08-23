@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: Caves
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
-  lengthScalar: 0.7
+  lengthScalar: 1
+  keepDirectionWeight: 0.8
+  upwardsWeight: 0.3
