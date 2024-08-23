@@ -17,7 +17,6 @@ public class Caves : GenerationStep {
         int walkMaxSteps = (int)(worldSize.height*lengthScalar);
         Vector2Int direction = Vector2Int.down;
         int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
-        
         Random.InitState((int)seed);
         Vector2Int position = new(Random.Range(0, elevations.Length), 0);
         position.y = elevations[position.x];
@@ -30,43 +29,49 @@ public class Caves : GenerationStep {
         Vector2Int previousRightWallPosition = position-width*Vector2Int.right;
     
         for (int i = 0; i < walkMaxSteps; i++){
+            
             Vector2Int wallOffset = (direction.sqrMagnitude == 1 ? width : diagonalWidth)*Perpendicular(direction);
             Vector2Int leftWallPosition = position+wallOffset;
             Vector2Int rightWallPosition = position-wallOffset;
-            if (leftWallPosition.y < 0 || leftWallPosition.x < 0 || elevations.Length <= leftWallPosition.x){
+            if (leftWallPosition.y < 0 || leftWallPosition.x < 0 || elevations.Length-1 <= leftWallPosition.x){
                 break;
             }
-            if (rightWallPosition.y < 0 || rightWallPosition.x < 0 || elevations.Length <= rightWallPosition.x){
+            if (rightWallPosition.y < 0 || rightWallPosition.x < 0 || elevations.Length-1 <= rightWallPosition.x){
                 break;
             }
+            // ref keyword
             while ((leftWallPosition-previousLeftWallPosition).sqrMagnitude > 0){
                 Vector2Int difference = leftWallPosition-previousLeftWallPosition;
                 previousLeftWallPosition += GridDiagonal(difference);
-                MakeCaveWall(worldGrid, previousLeftWallPosition);
                 Vector2Int caveInsidePosition = previousRightWallPosition;
                 while ((previousLeftWallPosition-caveInsidePosition).sqrMagnitude > 0){
                     Vector2Int insideDifference = previousLeftWallPosition-caveInsidePosition;
                     caveInsidePosition += GridDiagonal(insideDifference);
                     MakeCaveWall(worldGrid, caveInsidePosition);
+                    MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.right);
+                    MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
                 }
             }
             while ((rightWallPosition-previousRightWallPosition).sqrMagnitude > 0){
                 Vector2Int difference = rightWallPosition-previousRightWallPosition;
                 previousRightWallPosition += GridDiagonal(difference);
-                MakeCaveWall(worldGrid, previousRightWallPosition);
                 Vector2Int caveInsidePosition = previousRightWallPosition;
                 while ((previousLeftWallPosition-caveInsidePosition).sqrMagnitude > 0){
                     Vector2Int insideDifference = previousLeftWallPosition-caveInsidePosition;
                     caveInsidePosition += GridDiagonal(insideDifference);
                     MakeCaveWall(worldGrid, caveInsidePosition);
+                    MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.right);
+                    MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
                 }
             }
-
             position += direction;
-
+            if (worldGrid[position.x, position.y] == BlockType.Air || worldGrid[position.x, position.y] == BlockType.Water || worldGrid[position.x, position.y] == BlockType.Sand){
+                break;
+            }
             if (Random.value < keepDirectionWeight){
                 continue;
             }
+            
             int rightIndex = directionIndex-1;
             int leftIndex = directionIndex+1;
             if (rightIndex < 0){
@@ -84,21 +89,10 @@ public class Caves : GenerationStep {
             }
             direction = Directions[directionIndex];
         }
-    
-        Vector2Int exampleStart = new(200, 200);
-        Vector2Int exampleEnd = new(205, 214);
-        while ((exampleEnd-exampleStart).sqrMagnitude > 0){
-            Vector2Int differenc = exampleEnd-exampleStart;
-            exampleStart += GridDiagonal(differenc);
-            MakeCaveWall(worldGrid, exampleStart);
-        }
+        // TODO: Start and end circles.
         return 1;
     }
 
-    private void DrawDiagonalBetween(){
-        // TODO
-    }
-    
     private static Vector2Int GridDiagonal(Vector2Int difference){
         Vector2Int absDifference = new(Math.Abs(difference.x), Math.Abs(difference.y));
         Vector2Int straightOr45Diagonal = difference/Math.Max(absDifference.x, absDifference.y);
@@ -113,7 +107,8 @@ public class Caves : GenerationStep {
     private static void MakeCaveWall(BlockType[,] worldGrid, Vector2Int position){
         worldGrid[position.x, position.y] = worldGrid[position.x, position.y] switch {
             BlockType.Rock => BlockType.RockWall,
-            BlockType.Dirt or BlockType.Grass => BlockType.DirtWall,
+            BlockType.Dirt => BlockType.DirtWall,
+            BlockType.Grass => BlockType.Air,
             _ => worldGrid[position.x, position.y]
         };
     }
