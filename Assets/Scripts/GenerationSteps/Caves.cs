@@ -37,8 +37,10 @@ public class Caves : GenerationStep {
             if (IsOffGrid(newLeftWallPosition, xBound) || IsOffGrid(newRightWallPosition, xBound) || CaveBreakingBlocks.Contains(worldGrid[position.x, position.y])){
                 break;
             }
-            leftWallPosition = ConnectCaveWall(worldGrid, newLeftWallPosition, leftWallPosition, rightWallPosition);
-            rightWallPosition = ConnectCaveWall(worldGrid, newRightWallPosition, rightWallPosition, leftWallPosition);
+            ConnectCaveWall(worldGrid, newLeftWallPosition, leftWallPosition, rightWallPosition);
+            leftWallPosition = newLeftWallPosition;
+            ConnectCaveWall(worldGrid, newRightWallPosition, rightWallPosition, leftWallPosition);
+            rightWallPosition = newRightWallPosition;
             position += direction;
             
             if (Random.value < keepDirectionWeight){
@@ -55,32 +57,36 @@ public class Caves : GenerationStep {
         return position.y < 0 || position.x < 0 || xBound <= position.x;
     }
     
-    // TODO: Compare to previous commit.
-    private static Vector2Int ConnectCaveWall(BlockType[,] worldGrid, Vector2Int newWallPosition, Vector2Int wallPosition, Vector2Int otherWallPosition){
-        while ((newWallPosition-wallPosition).sqrMagnitude > 0){
-            Vector2Int difference = newWallPosition-wallPosition;
-            wallPosition += GridDiagonal(difference);
-            Vector2Int caveInsidePosition = otherWallPosition;
-            while ((wallPosition-caveInsidePosition).sqrMagnitude > 0){
-                Vector2Int insideDifference = wallPosition-caveInsidePosition;
-                caveInsidePosition += GridDiagonal(insideDifference);
+    private static void ConnectCaveWall(BlockType[,] worldGrid, Vector2Int newWallPosition, Vector2Int wallPosition, Vector2Int otherWallPosition){
+        FillDiagonal(wallPosition, newWallPosition, currentWallPosition => {
+            FillDiagonal(otherWallPosition, currentWallPosition, caveInsidePosition => {
                 MakeCaveWall(worldGrid, caveInsidePosition);
                 MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.right);
                 MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
-            }
-        }
-        return wallPosition;
+            });
+        });
     }
 
-    private static Vector2Int GridDiagonal(Vector2Int difference){
-        Vector2Int absDifference = new(Math.Abs(difference.x), Math.Abs(difference.y));
-        Vector2Int straightOr45Diagonal = difference/Math.Max(absDifference.x, absDifference.y);
-        int min = Math.Min(absDifference.x, absDifference.y);
-        if (min == 0){
-            return straightOr45Diagonal;
+    private static void FillDiagonal(Vector2Int start, Vector2Int end, Action<Vector2Int> fillAction){
+        if (start == end){
+            fillAction(start);
+            return;
         }
-        Vector2Int diagonal = new(difference.x/absDifference.x, difference.y/absDifference.y);
-        return Math.Abs(Math.Atan(difference.y/(float)difference.x)) < Mathf.PI/4 ? straightOr45Diagonal : diagonal;
+        Vector2Int difference = end-start;
+        Vector2Int currentPosition;
+        if (Math.Abs(difference.y) < Math.Abs(difference.x)){
+            float length = Math.Abs(difference.x);
+            for (int i = 0; i <= length; i++){
+                currentPosition = start + new Vector2Int(i*Math.Sign(difference.x), Mathf.RoundToInt(difference.y*i/length));
+                fillAction(currentPosition);
+            }
+        } else {
+            float length = Math.Abs(difference.y);
+            for (int i = 0; i <= length; i++){
+                currentPosition = start + new Vector2Int(Mathf.RoundToInt(difference.x*i/length), i*Math.Sign(difference.y));
+                fillAction(currentPosition);
+            }
+        }
     }
     
     private static void MakeCaveWall(BlockType[,] worldGrid, Vector2Int position){
