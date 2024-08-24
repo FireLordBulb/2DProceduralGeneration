@@ -19,6 +19,11 @@ public class Oceans : GenerationStep {
     private void CreateOcean(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, int side){
         int waterWidth = (int)(oceanWidthFraction*worldSize.width);
         int beachWidth = (int)(beachWidthFraction*worldSize.width);
+        if (side == Left){
+            worldSize.LeftBeachEdge = waterWidth+beachWidth;
+        } else {
+            worldSize.RightBeachEdge = elevations.Length-waterWidth-beachWidth;
+        }
         int waterDepth = (int)(waterWidth*depthPerWidth);
         float anglePerBlock = QuarterTurn/waterWidth;
         int x = side == Left ? 0 : worldSize.width-1;

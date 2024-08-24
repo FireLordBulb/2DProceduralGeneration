@@ -6,12 +6,16 @@ using Random = UnityEngine.Random;
 
 [CreateAssetMenu(menuName = "GenerationSteps/Caves", fileName = "Caves")]
 public class Caves : GenerationStep {
-    [SerializeField] private RandomFloatRange widthPerCave;
+    [SerializeField] private RandomFloatRange worldWidthPerCave;
+    [SerializeField] private bool doAvoidOceans;
     [SerializeField] private RandomFloatRange startingDepthFraction;
     [SerializeField] private RandomFloatRange lengthScalar;
+    [SerializeField] private int maxAirBlocks;
+    [Header("Cave Radius")]
     [SerializeField] private float averageRadius;
     [SerializeField] private float maxRadiusVariance;
     [SerializeField] private float noiseRoughness;
+    [Header("Controlled Random Walk")]
     [Range(0, 1)]
     [SerializeField] private float keepDirectionWeight;
     [Range(0, 1)]
@@ -19,14 +23,23 @@ public class Caves : GenerationStep {
     [Range(0, 1)]
     [SerializeField] private float upwardsWeight;
 
-    private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Air, BlockType.Water, BlockType.Sand};
+    private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Water, BlockType.Sand};
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         int downIndex = Array.FindIndex(Directions, vector => vector == Vector2Int.down);
-        int numberOfCaves = Mathf.RoundToInt(elevations.Length/widthPerCave.Value);
+        int leftSpawnEdge, rightSpawnEdge;
+        if (doAvoidOceans){
+            leftSpawnEdge = worldSize.LeftBeachEdge;
+            rightSpawnEdge = worldSize.RightBeachEdge;
+        } else {
+            leftSpawnEdge = 0;
+            rightSpawnEdge = elevations.Length;
+        }
+        int numberOfCaves = Mathf.RoundToInt((rightSpawnEdge-leftSpawnEdge)/worldWidthPerCave.Value);
         for (int i = 0; i < numberOfCaves; i++){
-            Vector2Int position = new(Random.Range(0, elevations.Length), 0);
+            int airBlockCount = 0;
+            Vector2Int position = new(Random.Range(leftSpawnEdge, rightSpawnEdge), 0);
             position.y = elevations[position.x] - Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
             int walkMaxSteps = Mathf.RoundToInt(lengthScalar.Value*worldSize.height);
             Vector2Int direction = Vector2Int.down;
@@ -37,10 +50,16 @@ public class Caves : GenerationStep {
                 Vector2Int newLeftWallPosition = position + CalculateWallOffset(seed, step, direction);
                 Vector2Int newRightWallPosition = position - CalculateWallOffset(seed + 1, step, direction);
                 // Counts the rightmost x-index as outside the grid so ConnectCaveWall's "+Vector2Int.right" doesn't cause an error.
-                int xBound = elevations.Length - 1;
+                int xBound = elevations.Length-1;
                 if (IsOffGrid(newLeftWallPosition, xBound) || IsOffGrid(newRightWallPosition, xBound) ||
-                    CaveBreakingBlocks.Contains(worldGrid[position.x, position.y])){
+                    IsBreakingBlock(worldGrid, position+direction, xBound)){
                     break;
+                }
+                if (worldGrid[position.x, position.y] == BlockType.Air){
+                    airBlockCount++;
+                    if (airBlockCount == maxAirBlocks){
+                        break;
+                    }
                 }
                 ConnectCaveWall(worldGrid, newLeftWallPosition, leftWallPosition, rightWallPosition);
                 leftWallPosition = newLeftWallPosition;
@@ -71,6 +90,10 @@ public class Caves : GenerationStep {
     
     private static bool IsOffGrid(Vector2Int position, int xBound){
         return position.y < 0 || position.x < 0 || xBound <= position.x;
+    }
+
+    private static bool IsBreakingBlock(BlockType[,] worldGrid, Vector2Int position, int xBound){
+        return IsOffGrid(position, xBound) || CaveBreakingBlocks.Contains(worldGrid[position.x, position.y]);
     }
     
     private static void ConnectCaveWall(BlockType[,] worldGrid, Vector2Int newWallPosition, Vector2Int wallPosition, Vector2Int otherWallPosition){
@@ -104,6 +127,7 @@ public class Caves : GenerationStep {
             BlockType.Rock => BlockType.RockWall,
             BlockType.Dirt => BlockType.DirtWall,
             BlockType.Grass => BlockType.Air,
+            BlockType.Sand => BlockType.SandWall,
             _ => worldGrid[position.x, position.y]
         };
     }

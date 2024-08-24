@@ -13,18 +13,20 @@ MonoBehaviour:
   m_Name: Caves
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
-  widthPerCave:
-    min: 140
-    max: 200
+  worldWidthPerCave:
+    min: 100
+    max: 140
+  doAvoidOceans: 1
   startingDepthFraction:
     min: 0
     max: 0
   lengthScalar:
-    min: 0.8
+    min: 0.6
     max: 1.4
+  maxAirBlocks: 10
   averageRadius: 7
   maxRadiusVariance: 4
   noiseRoughness: 0.1
   keepDirectionWeight: 0.8
   keepSidewaysDirectionWeight: 0.8
-  upwardsWeight: 0.3
+  upwardsWeight: 0.2

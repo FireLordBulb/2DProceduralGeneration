@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
@@ -84,8 +83,10 @@ public struct BlockTilePair {
 }
 
 [Serializable]
-public struct WorldSize {
+public class WorldSize {
     public int width, height;
     public int seaLevel;
     public string name;
+    public int LeftBeachEdge { get; set; }
+    public int RightBeachEdge { get; set; }
 }
