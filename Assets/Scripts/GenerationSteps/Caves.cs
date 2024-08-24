@@ -60,9 +60,9 @@ public class Caves : GenerationStep {
         while ((newWallPosition-wallPosition).sqrMagnitude > 0){
             Vector2Int difference = newWallPosition-wallPosition;
             wallPosition += GridDiagonal(difference);
-            Vector2Int caveInsidePosition = wallPosition;
-            while ((otherWallPosition-caveInsidePosition).sqrMagnitude > 0){
-                Vector2Int insideDifference = otherWallPosition-caveInsidePosition;
+            Vector2Int caveInsidePosition = otherWallPosition;
+            while ((wallPosition-caveInsidePosition).sqrMagnitude > 0){
+                Vector2Int insideDifference = wallPosition-caveInsidePosition;
                 caveInsidePosition += GridDiagonal(insideDifference);
                 MakeCaveWall(worldGrid, caveInsidePosition);
                 MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.right);
