@@ -8,6 +8,7 @@ public class TerrainGeneration : GenerationStep {
     [SerializeField] private float maxHeightFraction;
     [SerializeField] private TerrainModificationCurve[] terrainModificationCurves;
     [SerializeField] private int dirtThickness;
+    
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         int worldHeightAboveUnderground = worldSize.height-worldSize.seaLevel;
         float maxHeight = worldHeightAboveUnderground*maxHeightFraction;

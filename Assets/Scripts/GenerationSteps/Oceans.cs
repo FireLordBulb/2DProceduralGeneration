@@ -9,6 +9,7 @@ public class Oceans : GenerationStep {
     [SerializeField] private float depthPerWidth;
     [SerializeField] private int seaBedThickness;
     [SerializeField] private int beachDepth;
+    
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         CreateOcean(worldGrid, elevations, worldSize, Left);
         CreateOcean(worldGrid, elevations, worldSize, Right);
