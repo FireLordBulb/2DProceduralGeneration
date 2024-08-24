@@ -20,4 +20,4 @@ MonoBehaviour:
     maxBlockDifference: 3
   - noiseSmoothness: 50
     maxBlockDifference: 7
-  dirtThickness: 7
+  dirtThickness: 15
