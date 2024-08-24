@@ -14,5 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
   lengthScalar: 1
+  averageRadius: 7
+  maxRadiusVariance: 4
+  noiseRoughness: 0.1
   keepDirectionWeight: 0.8
   upwardsWeight: 0.3

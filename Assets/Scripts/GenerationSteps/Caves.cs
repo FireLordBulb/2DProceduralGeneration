@@ -1,11 +1,15 @@
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [CreateAssetMenu(menuName = "GenerationSteps/Caves", fileName = "Caves")]
 public class Caves : GenerationStep {
     [SerializeField] private float lengthScalar;
+    [SerializeField] private float averageRadius;
+    [SerializeField] private float maxRadiusVariance;
+    [SerializeField] private float noiseRoughness;
     [Range(0, 1)]
     [SerializeField] private float keepDirectionWeight;
     [Range(0, 1)]
@@ -15,23 +19,17 @@ public class Caves : GenerationStep {
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
+        Random.InitState((int)seed);
         int walkMaxSteps = (int)(worldSize.height*lengthScalar);
         Vector2Int direction = Vector2Int.down;
         int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
-        Random.InitState((int)seed);
         Vector2Int position = new(Random.Range(0, elevations.Length), 0);
         position.y = elevations[position.x];
-        
-        // TEMP
-        const int width = 6;
-        const int diagonalWidth = 4;
-        
-        Vector2Int leftWallPosition = position+width*Vector2Int.right;
-        Vector2Int rightWallPosition = position-width*Vector2Int.right;
+        Vector2Int leftWallPosition = position, rightWallPosition = position;
         for (int i = 0; i < walkMaxSteps; i++){
-            Vector2Int wallOffset = (direction.sqrMagnitude == 1 ? width : diagonalWidth)*Perpendicular(direction);
-            Vector2Int newLeftWallPosition = position+wallOffset;
-            Vector2Int newRightWallPosition = position-wallOffset;
+            // The left and right walls use different seeds since they should be fully independent of each other.
+            Vector2Int newLeftWallPosition = position+CalculateWallOffset(seed, i, direction);
+            Vector2Int newRightWallPosition = position-CalculateWallOffset(seed+1, i, direction);
             // Counts the rightmost x-index as outside the grid so ConnectCaveWall's "+Vector2Int.right" doesn't cause an error.
             int xBound = elevations.Length-1;
             if (IsOffGrid(newLeftWallPosition, xBound) || IsOffGrid(newRightWallPosition, xBound) || CaveBreakingBlocks.Contains(worldGrid[position.x, position.y])){
@@ -49,10 +47,18 @@ public class Caves : GenerationStep {
             directionIndex = GetNewDirectionIndex(directionIndex);
             direction = Directions[directionIndex];
         }
+        seed.Increment();
+        
         // TODO: Start and end circles.
         return 1;
     }
 
+    private Vector2Int CalculateWallOffset(long seed, int i, Vector2Int direction){
+        float noise = OpenSimplex2S.Noise2(seed, i * noiseRoughness, 0);
+        float radius = averageRadius + maxRadiusVariance*noise*Math.Abs(noise);
+        return Mathf.RoundToInt(radius/direction.magnitude)*Perpendicular(direction);
+    }
+    
     private static bool IsOffGrid(Vector2Int position, int xBound){
         return position.y < 0 || position.x < 0 || xBound <= position.x;
     }
