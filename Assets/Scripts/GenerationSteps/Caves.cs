@@ -58,8 +58,8 @@ public class Caves : GenerationStep {
     }
     
     private static void ConnectCaveWall(BlockType[,] worldGrid, Vector2Int newWallPosition, Vector2Int wallPosition, Vector2Int otherWallPosition){
-        FillDiagonal(wallPosition, newWallPosition, currentWallPosition => {
-            FillDiagonal(otherWallPosition, currentWallPosition, caveInsidePosition => {
+        FillDiagonal(newWallPosition, wallPosition, currentWallPosition => {
+            FillDiagonal(currentWallPosition, otherWallPosition, caveInsidePosition => {
                 MakeCaveWall(worldGrid, caveInsidePosition);
                 MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.right);
                 MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
@@ -67,23 +67,19 @@ public class Caves : GenerationStep {
         });
     }
 
-    private static void FillDiagonal(Vector2Int start, Vector2Int end, Action<Vector2Int> fillAction){
-        if (start == end){
-            fillAction(start);
-            return;
-        }
-        Vector2Int difference = end-start;
+    private static void FillDiagonal(Vector2Int inclusiveEnd, Vector2Int exclusiveEnd, Action<Vector2Int> fillAction){
+        Vector2Int difference = exclusiveEnd-inclusiveEnd;
         Vector2Int currentPosition;
         if (Math.Abs(difference.y) < Math.Abs(difference.x)){
             float length = Math.Abs(difference.x);
-            for (int i = 0; i <= length; i++){
-                currentPosition = start + new Vector2Int(i*Math.Sign(difference.x), Mathf.RoundToInt(difference.y*i/length));
+            for (int i = 0; i < length; i++){
+                currentPosition = inclusiveEnd + new Vector2Int(i*Math.Sign(difference.x), Mathf.RoundToInt(difference.y*i/length));
                 fillAction(currentPosition);
             }
         } else {
             float length = Math.Abs(difference.y);
-            for (int i = 0; i <= length; i++){
-                currentPosition = start + new Vector2Int(Mathf.RoundToInt(difference.x*i/length), i*Math.Sign(difference.y));
+            for (int i = 0; i < length; i++){
+                currentPosition = inclusiveEnd + new Vector2Int(Mathf.RoundToInt(difference.x*i/length), i*Math.Sign(difference.y));
                 fillAction(currentPosition);
             }
         }
