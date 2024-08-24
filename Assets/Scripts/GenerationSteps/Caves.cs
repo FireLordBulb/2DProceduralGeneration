@@ -1,12 +1,13 @@
 using System;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [CreateAssetMenu(menuName = "GenerationSteps/Caves", fileName = "Caves")]
 public class Caves : GenerationStep {
-    [SerializeField] private float lengthScalar;
+    [SerializeField] private RandomFloatRange widthPerCave;
+    [SerializeField] private RandomFloatRange startingDepthFraction;
+    [SerializeField] private RandomFloatRange lengthScalar;
     [SerializeField] private float averageRadius;
     [SerializeField] private float maxRadiusVariance;
     [SerializeField] private float noiseRoughness;
@@ -20,12 +21,12 @@ public class Caves : GenerationStep {
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         Random.InitState((int)seed);
-        int walkMaxSteps = (int)(worldSize.height*lengthScalar);
         Vector2Int direction = Vector2Int.down;
         int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
         Vector2Int position = new(Random.Range(0, elevations.Length), 0);
         position.y = elevations[position.x];
         Vector2Int leftWallPosition = position, rightWallPosition = position;
+        int walkMaxSteps = (int)(worldSize.height*lengthScalar.Value);
         for (int i = 0; i < walkMaxSteps; i++){
             // The left and right walls use different seeds since they should be fully independent of each other.
             Vector2Int newLeftWallPosition = position+CalculateWallOffset(seed, i, direction);
