@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [CreateAssetMenu(menuName = "GenerationSteps/Caves", fileName = "Caves")]
@@ -14,48 +15,56 @@ public class Caves : GenerationStep {
     [Range(0, 1)]
     [SerializeField] private float keepDirectionWeight;
     [Range(0, 1)]
+    [SerializeField] private float keepSidewaysDirectionWeight;
+    [Range(0, 1)]
     [SerializeField] private float upwardsWeight;
 
     private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Air, BlockType.Water, BlockType.Sand};
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
-        Random.InitState((int)seed);
-        Vector2Int direction = Vector2Int.down;
-        int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
-        Vector2Int position = new(Random.Range(0, elevations.Length), 0);
-        position.y = elevations[position.x];
-        Vector2Int leftWallPosition = position, rightWallPosition = position;
-        int walkMaxSteps = (int)(worldSize.height*lengthScalar.Value);
-        for (int i = 0; i < walkMaxSteps; i++){
-            // The left and right walls use different seeds since they should be fully independent of each other.
-            Vector2Int newLeftWallPosition = position+CalculateWallOffset(seed, i, direction);
-            Vector2Int newRightWallPosition = position-CalculateWallOffset(seed+1, i, direction);
-            // Counts the rightmost x-index as outside the grid so ConnectCaveWall's "+Vector2Int.right" doesn't cause an error.
-            int xBound = elevations.Length-1;
-            if (IsOffGrid(newLeftWallPosition, xBound) || IsOffGrid(newRightWallPosition, xBound) || CaveBreakingBlocks.Contains(worldGrid[position.x, position.y])){
-                break;
+        int downIndex = Array.FindIndex(Directions, vector => vector == Vector2Int.down);
+        int numberOfCaves = Mathf.RoundToInt(elevations.Length/widthPerCave.Value);
+        for (int i = 0; i < numberOfCaves; i++){
+            Vector2Int position = new(Random.Range(0, elevations.Length), 0);
+            position.y = elevations[position.x] - Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
+            int walkMaxSteps = Mathf.RoundToInt(lengthScalar.Value*worldSize.height);
+            Vector2Int direction = Vector2Int.down;
+            int directionIndex = downIndex;
+            Vector2Int leftWallPosition = position, rightWallPosition = position;
+            for (int step = 0; step < walkMaxSteps; step++){
+                // The left and right walls use different seeds since they should be fully independent of each other.
+                Vector2Int newLeftWallPosition = position + CalculateWallOffset(seed, step, direction);
+                Vector2Int newRightWallPosition = position - CalculateWallOffset(seed + 1, step, direction);
+                // Counts the rightmost x-index as outside the grid so ConnectCaveWall's "+Vector2Int.right" doesn't cause an error.
+                int xBound = elevations.Length - 1;
+                if (IsOffGrid(newLeftWallPosition, xBound) || IsOffGrid(newRightWallPosition, xBound) ||
+                    CaveBreakingBlocks.Contains(worldGrid[position.x, position.y])){
+                    break;
+                }
+                ConnectCaveWall(worldGrid, newLeftWallPosition, leftWallPosition, rightWallPosition);
+                leftWallPosition = newLeftWallPosition;
+                ConnectCaveWall(worldGrid, newRightWallPosition, rightWallPosition, leftWallPosition);
+                rightWallPosition = newRightWallPosition;
+                position += direction;
+
+                float weight = direction.y == 0 ? keepSidewaysDirectionWeight : keepDirectionWeight;
+                if (Random.value < weight){
+                    continue;
+                }
+                directionIndex = GetNewDirectionIndex(directionIndex);
+                direction = Directions[directionIndex];
             }
-            ConnectCaveWall(worldGrid, newLeftWallPosition, leftWallPosition, rightWallPosition);
-            leftWallPosition = newLeftWallPosition;
-            ConnectCaveWall(worldGrid, newRightWallPosition, rightWallPosition, leftWallPosition);
-            rightWallPosition = newRightWallPosition;
-            position += direction;
-            
-            if (Random.value < keepDirectionWeight){
-                continue;
-            }
-            directionIndex = GetNewDirectionIndex(directionIndex);
-            direction = Directions[directionIndex];
+            // TODO: Start and end circles.
+            // Have to increment seed twice since a cave uses both seed and seed+1.
+            seed.Increment();
+            seed.Increment();
         }
-        seed.Increment();
-        
-        // TODO: Start and end circles.
         return 1;
     }
 
-    private Vector2Int CalculateWallOffset(long seed, int i, Vector2Int direction){
-        float noise = OpenSimplex2S.Noise2(seed, i * noiseRoughness, 0);
+    private Vector2Int CalculateWallOffset(long seed, int step, Vector2Int direction){
+        float noise = OpenSimplex2S.Noise2(seed, step*noiseRoughness, 0);
         float radius = averageRadius + maxRadiusVariance*noise*Math.Abs(noise);
         return Mathf.RoundToInt(radius/direction.magnitude)*Perpendicular(direction);
     }

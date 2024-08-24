@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
   widthPerCave:
-    min: 60
-    max: 90
+    min: 140
+    max: 200
   startingDepthFraction:
     min: 0
-    max: 0.04
+    max: 0
   lengthScalar:
     min: 0.8
     max: 1.4
@@ -26,4 +26,5 @@ MonoBehaviour:
   maxRadiusVariance: 4
   noiseRoughness: 0.1
   keepDirectionWeight: 0.8
+  keepSidewaysDirectionWeight: 0.8
   upwardsWeight: 0.3

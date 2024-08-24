@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
+using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour {
     public const int X = 0, Y = 1;
@@ -34,6 +35,7 @@ public class WorldGenerator : MonoBehaviour {
             seed = BitConverter.ToInt64(longBytes);
         }
         seedReference = new Seed(seed);
+        Random.InitState((int)seed);
         WorldSize worldSize = worldSizes[0];
         foreach (WorldSize size in worldSizes){
             if (!size.name.Equals(worldSizeName)){
