@@ -69,19 +69,17 @@ public class Caves : GenerationStep {
 
     private static void FillDiagonal(Vector2Int inclusiveEnd, Vector2Int exclusiveEnd, Action<Vector2Int> fillAction){
         Vector2Int difference = exclusiveEnd-inclusiveEnd;
-        Vector2Int currentPosition;
-        if (Math.Abs(difference.y) < Math.Abs(difference.x)){
-            float length = Math.Abs(difference.x);
-            for (int i = 0; i < length; i++){
-                currentPosition = inclusiveEnd + new Vector2Int(i*Math.Sign(difference.x), Mathf.RoundToInt(difference.y*i/length));
-                fillAction(currentPosition);
+        bool yIsSteeper = Math.Abs(difference.x) < Math.Abs(difference.y);
+        if (yIsSteeper){
+            difference = Swizzle(difference);
+        }
+        float length = Math.Abs(difference.x);
+        for (int i = 0; i < length; i++){
+            Vector2Int offset = new(i*Math.Sign(difference.x), Mathf.RoundToInt(difference.y*i/length));
+            if (yIsSteeper){
+                offset = Swizzle(offset);
             }
-        } else {
-            float length = Math.Abs(difference.y);
-            for (int i = 0; i < length; i++){
-                currentPosition = inclusiveEnd + new Vector2Int(Mathf.RoundToInt(difference.x*i/length), i*Math.Sign(difference.y));
-                fillAction(currentPosition);
-            }
+            fillAction(inclusiveEnd+offset);
         }
     }
     
@@ -115,5 +113,9 @@ public class Caves : GenerationStep {
     // Gives counter-clockwise perpendicular. // Why doesn't this already exist for Vector2Int, Unity!!!!
     private static Vector2Int Perpendicular(Vector2Int vector){
         return new Vector2Int(-vector.y, vector.x);
+    }
+
+    private static Vector2Int Swizzle(Vector2Int vector){
+        return new Vector2Int(vector.y, vector.x);
     }
 }
