@@ -27,7 +27,7 @@ public class Oceans : GenerationStep {
             // Values for the ocean.
             if (i > beachWidth){
                 surfaceElevation = worldSize.seaLevel;
-                waterBottom = surfaceElevation - (int)(waterDepth * Mathf.Sin((i-beachWidth)*anglePerBlock));
+                waterBottom = surfaceElevation - Mathf.RoundToInt(waterDepth * Mathf.Sin((i-beachWidth)*anglePerBlock));
             // Values for the beach part.
             } else {
                 surfaceElevation = elevations[x] + (worldSize.seaLevel-elevations[x])*i/beachWidth;
