@@ -62,6 +62,8 @@ MonoBehaviour:
     tile: {fileID: 11400000, guid: af318af31d20c204497c43499525b065, type: 2}
   - block: 7
     tile: {fileID: 11400000, guid: 47941dafa3c52c7428b308df795d5bb6, type: 2}
+  - block: 8
+    tile: {fileID: 11400000, guid: b343f89b4637a9f4ebba079850929597, type: 2}
   useRandomSeed: 0
   seed: 526169754230076738
   worldSizeName: Medium
