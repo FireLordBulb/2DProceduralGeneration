@@ -1,13 +1,12 @@
 using System;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [CreateAssetMenu(menuName = "GenerationSteps/Caves", fileName = "Caves")]
 public class Caves : GenerationStep {
     [SerializeField] private RandomFloatRange worldWidthPerCave;
-    [SerializeField] private bool doAvoidOceans;
+    [SerializeField] private bool doSpawnOnSurface;
     [SerializeField] private RandomFloatRange startingDepthFraction;
     [SerializeField] private RandomFloatRange lengthScalar;
     [SerializeField] private int maxAirBlocks;
@@ -27,9 +26,8 @@ public class Caves : GenerationStep {
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
-        int downIndex = Array.FindIndex(Directions, vector => vector == Vector2Int.down);
         int leftSpawnEdge, rightSpawnEdge;
-        if (doAvoidOceans){
+        if (doSpawnOnSurface){
             leftSpawnEdge = worldSize.LeftBeachEdge;
             rightSpawnEdge = worldSize.RightBeachEdge;
         } else {
@@ -40,10 +38,19 @@ public class Caves : GenerationStep {
         for (int i = 0; i < numberOfCaves; i++){
             int airBlockCount = 0;
             Vector2Int position = new(Random.Range(leftSpawnEdge, rightSpawnEdge), 0);
-            position.y = elevations[position.x] - Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
+            position.y = elevations[position.x];
             int walkMaxSteps = Mathf.RoundToInt(lengthScalar.Value*worldSize.height);
-            Vector2Int direction = Vector2Int.down;
-            int directionIndex = downIndex;
+            Vector2Int direction;
+            if (doSpawnOnSurface){
+                Vector2Int surfaceTangent = new(-1 - +1, elevations[position.x-1] - elevations[position.x+1]);
+                // Reduces the surface tangent to one of the 8 cardinal/ordinal directions.
+                surfaceTangent /= Math.Max(Math.Abs(surfaceTangent.x), Math.Abs(surfaceTangent.y));
+                direction = Perpendicular(surfaceTangent);
+            } else {
+                direction = Directions[Random.Range(0, Directions.Length)];
+                position.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
+            }
+            int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
             Vector2Int leftWallPosition = position, rightWallPosition = position;
             for (int step = 0; step < walkMaxSteps; step++){
                 // The left and right walls use different seeds since they should be fully independent of each other.
