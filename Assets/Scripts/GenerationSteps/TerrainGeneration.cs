@@ -3,25 +3,23 @@ using UnityEngine;
 
 [CreateAssetMenu(menuName = "GenerationSteps/TerrainGeneration", fileName = "TerrainGeneration")]
 public class TerrainGeneration : GenerationStep {
-    [SerializeField] private float noiseSmoothness;
+    [SerializeField] private float heightAboveSeaScaledNoiseRoughness;
     [Range(0, 1)] // 0 means nothing exists above the underground and 1 means the max height touches the top of the world grid.
     [SerializeField] private float maxHeightFraction;
     [SerializeField] private TerrainModificationCurve[] terrainModificationCurves;
     [SerializeField] private int dirtThickness;
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
-        int worldHeightAboveUnderground = worldSize.height-worldSize.seaLevel;
-        float maxHeight = worldHeightAboveUnderground*maxHeightFraction;
+        int worldHeightAboveSea = worldSize.height-worldSize.seaLevel;
+        float maxHeight = worldHeightAboveSea*maxHeightFraction;
         for (int x = elevations.Length-1; x >= 0; x--){
-            float noise = (1+OpenSimplex2S.Noise2(seed, x /noiseSmoothness /worldHeightAboveUnderground, 0))/2;
-            // Square the magnitude of noise, making more of it be closer to 0.
-            noise *= Math.Abs(noise);
-            elevations[x] = worldSize.seaLevel+(int)(maxHeight*noise);
+            float noise = (1+OpenSimplex2S.Noise2(seed, x*heightAboveSeaScaledNoiseRoughness/worldHeightAboveSea, 0))/2;
+            elevations[x] = worldSize.seaLevel+(int)(maxHeight*noise*noise);
         }
         foreach (TerrainModificationCurve curve in terrainModificationCurves){
             seed.Increment();
             for (int x = elevations.Length-1; x >= 0; x--){
-                float noise = OpenSimplex2S.Noise2(seed, x /curve.noiseSmoothness, 0);
+                float noise = OpenSimplex2S.Noise2(seed, x*curve.noiseRoughness, 0);
                 elevations[x] += (int)(curve.maxBlockDifference*noise);
             } 
         }
@@ -40,6 +38,6 @@ public class TerrainGeneration : GenerationStep {
 
 [Serializable]
 public struct TerrainModificationCurve {
-    public float noiseSmoothness;
+    public float noiseRoughness;
     public float maxBlockDifference;
 }
