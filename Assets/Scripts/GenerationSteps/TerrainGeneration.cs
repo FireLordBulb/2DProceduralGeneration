@@ -7,25 +7,29 @@ public class TerrainGeneration : GenerationStep {
     [Range(0, 1)] // 0 means nothing exists above the underground and 1 means the max height touches the top of the world grid.
     [SerializeField] private float maxHeightFraction;
     [SerializeField] private TerrainModificationCurve[] terrainModificationCurves;
-    [SerializeField] private int dirtThickness;
+    [SerializeField] private float averageDirtThickness;
+    [SerializeField] private TerrainModificationCurve dirtThicknessModificationCurve;
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         int worldHeightAboveSea = worldSize.height-worldSize.seaLevel;
         float maxHeight = worldHeightAboveSea*maxHeightFraction;
         for (int x = elevations.Length-1; x >= 0; x--){
             float noise = (1+OpenSimplex2S.Noise2(seed, x*heightAboveSeaScaledNoiseRoughness/worldHeightAboveSea, 0))/2;
-            elevations[x] = worldSize.seaLevel+(int)(maxHeight*noise*noise);
+            elevations[x] = worldSize.seaLevel+Mathf.RoundToInt(maxHeight*noise*noise);
         }
         foreach (TerrainModificationCurve curve in terrainModificationCurves){
             seed.Increment();
             for (int x = elevations.Length-1; x >= 0; x--){
                 float noise = OpenSimplex2S.Noise2(seed, x*curve.noiseRoughness, 0);
-                elevations[x] += (int)(curve.maxBlockDifference*noise);
+                elevations[x] += Mathf.RoundToInt(curve.maxBlockDifference*noise);
             } 
         }
+        seed.Increment();
         for (int x = elevations.Length-1; x >= 0; x--){
             int y = worldSize.height-1;
             elevations[x] = Math.Clamp(elevations[x], 0, y);
+            float noise = OpenSimplex2S.Noise2(seed, x*dirtThicknessModificationCurve.noiseRoughness, 0);
+            int dirtThickness = Mathf.RoundToInt(averageDirtThickness + dirtThicknessModificationCurve.maxBlockDifference*noise);
             FillColumn(worldGrid, x, y,
                 new BlockSection(elevations[x], BlockType.Air),
                 new BlockSection(Math.Max(elevations[x]-dirtThickness, 0), BlockType.Dirt),

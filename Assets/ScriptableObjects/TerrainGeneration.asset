@@ -20,4 +20,7 @@ MonoBehaviour:
     maxBlockDifference: 3
   - noiseRoughness: 0.02
     maxBlockDifference: 7
-  dirtThickness: 15
+  averageDirtThickness: 15
+  dirtThicknessModificationCurve:
+    noiseRoughness: 0.03
+    maxBlockDifference: 4
