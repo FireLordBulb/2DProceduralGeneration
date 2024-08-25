@@ -99,8 +99,15 @@ public class Caves : GenerationStep {
     }
     private Vector2Int CalculateWallOffset(long seed, int step, Vector2Int direction, float radiusScale){
         float noise = OpenSimplex2S.Noise2(seed, step*noiseRoughness, 0);
-        float radius = averageRadius + maxRadiusVariance*noise*Math.Abs(noise);
-        return Mathf.RoundToInt(radius*radiusScale/direction.magnitude)*Perpendicular(direction);
+        float scaledRadius = (averageRadius + maxRadiusVariance*noise*Math.Abs(noise))*radiusScale;
+        if (direction.sqrMagnitude == 1){
+            return Mathf.RoundToInt(scaledRadius)*Perpendicular(direction);
+        }
+        int diagonalHalfSteps = Mathf.RoundToInt(scaledRadius*2/direction.magnitude);
+        if (diagonalHalfSteps%2 != 0){
+            return (diagonalHalfSteps+1)/2*Perpendicular(direction)+new Vector2Int(direction.x, 0);
+        }
+        return diagonalHalfSteps/2*Perpendicular(direction);
     }
     
     private void TakeCaveStep(BlockType[,] worldGrid, VectorPair newPositions, Vector2Int direction, bool beSafe = false){
