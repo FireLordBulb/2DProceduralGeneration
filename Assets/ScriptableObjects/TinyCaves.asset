@@ -16,7 +16,7 @@ MonoBehaviour:
   worldWidthPerCave:
     min: 75
     max: 100
-  doAvoidOceans: 0
+  doSpawnOnSurface: 0
   startingDepthFraction:
     min: 0
     max: 0.75
@@ -24,8 +24,8 @@ MonoBehaviour:
     min: 0.3
     max: 0.6
   maxAirBlocks: 10
-  averageRadius: 1.5
-  maxRadiusVariance: 1.5
+  averageRadius: 3
+  maxRadiusVariance: 3
   noiseRoughness: 0.5
   keepDirectionWeight: 0.8
   keepSidewaysDirectionWeight: 0.7
