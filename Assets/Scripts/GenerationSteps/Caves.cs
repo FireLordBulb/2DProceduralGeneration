@@ -58,7 +58,10 @@ public class Caves : GenerationStep {
         int step, airBlockCount = 0, directionIndex = Array.FindIndex(Directions, vector => vector == direction);
         for (step = 0; step < walkMaxSteps; step++){
             VectorPair newPositions = CalculateNewWallPositions(seed, step, direction);
-            if (IsBreakingBlock(worldGrid, centerPosition) || IsOffGrid(newPositions.Left, elevations.Length) || IsOffGrid(newPositions.Right, elevations.Length)){
+            if (IsOffGrid(worldGrid, newPositions.Left) || IsOffGrid(worldGrid, newPositions.Right)){
+                break;
+            }
+            if (CaveBreakingBlocks.Contains(worldGrid[centerPosition.x, centerPosition.y])){
                 break;
             }
             if (worldGrid[centerPosition.x, centerPosition.y] == BlockType.Air && ++airBlockCount == maxAirBlocks){
@@ -141,7 +144,7 @@ public class Caves : GenerationStep {
         }
     }
     private static void MakeCaveWallSafe(BlockType[,] worldGrid, Vector2Int position){
-        if (IsOffGrid(position, worldGrid.GetLength(WorldGenerator.X))){
+        if (IsOffGrid(worldGrid, position)){
             return;
         }
         MakeCaveWall(worldGrid, position);
@@ -173,13 +176,9 @@ public class Caves : GenerationStep {
         }
         return Random.value < weightedMiddlePoint ? leftIndex : rightIndex;
     }
-    
-    private static bool IsBreakingBlock(BlockType[,] worldGrid, Vector2Int position){
-        return IsOffGrid(position, worldGrid.GetLength(WorldGenerator.X)) || CaveBreakingBlocks.Contains(worldGrid[position.x, position.y]);
-    }
-    
-    private static bool IsOffGrid(Vector2Int position, int xBound){
-        return position.y < 0 || position.x < 0 || xBound <= position.x;
+
+    private static bool IsOffGrid(BlockType[,] worldGrid, Vector2Int position){
+        return position.y < 0 || position.x < 0 || worldGrid.GetLength(WorldGenerator.X) <= position.x;
     }
     
     // Gives counter-clockwise perpendicular. // Why doesn't this already exist for Vector2Int, Unity!!!!
