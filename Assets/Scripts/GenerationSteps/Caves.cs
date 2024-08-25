@@ -26,7 +26,7 @@ public class Caves : GenerationStep {
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
 
     private Vector2Int centerPosition;
-    private Vector2Int leftPosition, rightPosition;
+    private VectorPair wallPositions;
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         int leftSpawnEdge, rightSpawnEdge;
@@ -45,37 +45,33 @@ public class Caves : GenerationStep {
     }
 
     private void GenerateCave(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed, int startX){
-        Vector2Int startPosition = new(startX, elevations[startX]);
+        centerPosition = new Vector2Int(startX, elevations[startX]);
         int walkMaxSteps = Mathf.RoundToInt(lengthScalar.Value*worldSize.height);
+        int radius = Mathf.RoundToInt(averageRadius);
         Vector2Int direction;
         if (doSpawnOnSurface){
             Vector2Int surfaceTangent = new(-1 - +1, elevations[startX-1]-elevations[startX+1]);
             // Reduces the surface tangent to one of the 8 cardinal/ordinal directions.
             surfaceTangent /= Math.Max(Math.Abs(surfaceTangent.x), Math.Abs(surfaceTangent.y));
             direction = Perpendicular(surfaceTangent);
-        } else{
+        } else {
             direction = Directions[Random.Range(0, Directions.Length)];
-            startPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
+            centerPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
         }
-        centerPosition = leftPosition = rightPosition = startPosition;
-        int step = 0;
-        int airBlockCount = 0;
-        int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
-        for (; step < walkMaxSteps; step++){
-            // The left and right walls use different seeds since they should be fully independent of each other.
-            Vector2Int newLeftPosition = centerPosition + CalculateWallOffset(seed, step, direction);
-            Vector2Int newRightPosition = centerPosition - CalculateWallOffset(seed+1, step, direction);
-            if (IsBreakingBlock(worldGrid, centerPosition) || IsOffGrid(newLeftPosition, elevations.Length) ||
-                IsOffGrid(newRightPosition, elevations.Length)){
+        // Creates the cave opening before the cave proper starts.
+        centerPosition = wallPositions.Left = wallPositions.Right = centerPosition-radius*direction;
+        GenerateCaveEnd(worldGrid, seed, direction, -radius, 0);
+        // The cave proper.
+        int step, airBlockCount = 0, directionIndex = Array.FindIndex(Directions, vector => vector == direction);
+        for (step = 0; step < walkMaxSteps; step++){
+            VectorPair newPositions = CalculateNewWallPositions(seed, step, direction);
+            if (IsBreakingBlock(worldGrid, centerPosition) || IsOffGrid(newPositions.Left, elevations.Length) || IsOffGrid(newPositions.Right, elevations.Length)){
                 break;
             }
-            if (worldGrid[centerPosition.x, centerPosition.y] == BlockType.Air){
-                airBlockCount++;
-                if (airBlockCount == maxAirBlocks){
-                    break;
-                }
+            if (worldGrid[centerPosition.x, centerPosition.y] == BlockType.Air && ++airBlockCount == maxAirBlocks){
+                break;
             }
-            TakeCaveStep(worldGrid, newLeftPosition, newRightPosition, direction);
+            TakeCaveStep(worldGrid, newPositions, direction);
 
             float weight = direction.y == 0 ? keepSidewaysDirectionWeight : keepDirectionWeight;
             if (Random.value < weight){
@@ -84,45 +80,50 @@ public class Caves : GenerationStep {
             directionIndex = GetNewDirectionIndex(directionIndex);
             direction = Directions[directionIndex];
         }
-        int walkSteps = step;
-        int endSteps = walkSteps+Mathf.RoundToInt(averageRadius);
-        for (; step < endSteps; step++){
-            float scaleFactor = (step-walkSteps)/averageRadius;
-            scaleFactor = 1-scaleFactor*scaleFactor;
-            // The left and right walls use different seeds since they should be fully independent of each other.
-            Vector2Int newLeftPosition = centerPosition + CalculateWallOffset(seed, step, direction, scaleFactor);
-            Vector2Int newRightPosition = centerPosition - CalculateWallOffset(seed+1, step, direction, scaleFactor);
-            TakeCaveStep(worldGrid, newLeftPosition, newRightPosition, direction, true);
-        }
+        // Creates the cave end after the cave proper ends.
+        GenerateCaveEnd(worldGrid, seed, direction, step, step+radius, radius);
         // Have to increment seed twice since a cave uses both seed and seed+1.
         seed.Increment();
         seed.Increment();
     }
 
-    private Vector2Int CalculateWallOffset(long seed, int step, Vector2Int direction, float scaleFactor = 1){
+    // Makes an approximately half-circle-shaped area into cave walls (or air). 
+    private void GenerateCaveEnd(BlockType[,] worldGrid, Seed seed, Vector2Int direction, int startingStep, int endingStep, int radiusScaleOffset = 0){
+        for (int step = startingStep; step < endingStep; step++){
+            float radiusScale = (endingStep-step - radiusScaleOffset)/averageRadius;
+            radiusScale = 1-radiusScale*radiusScale;
+            VectorPair newPositions = CalculateNewWallPositions(seed, step, direction, radiusScale);
+            TakeCaveStep(worldGrid, newPositions, direction, true);
+        }
+    }
+
+    private VectorPair CalculateNewWallPositions(long seed, int step, Vector2Int direction, float radiusScale = 1){
+        VectorPair newPositions;
+        // The left and right walls use different seeds since they should be fully independent of each other.
+        newPositions.Left = centerPosition+CalculateWallOffset(seed, step, direction, radiusScale);
+        newPositions.Right = centerPosition-CalculateWallOffset(seed+1, step, direction, radiusScale);
+        return newPositions;
+    }
+    private Vector2Int CalculateWallOffset(long seed, int step, Vector2Int direction, float radiusScale){
         float noise = OpenSimplex2S.Noise2(seed, step*noiseRoughness, 0);
         float radius = averageRadius + maxRadiusVariance*noise*Math.Abs(noise);
-        return Mathf.RoundToInt(radius*scaleFactor/direction.magnitude)*Perpendicular(direction);
+        return Mathf.RoundToInt(radius*radiusScale/direction.magnitude)*Perpendicular(direction);
     }
     
-    private void TakeCaveStep(BlockType[,] worldGrid, Vector2Int newLeftPosition, Vector2Int newRightPosition, Vector2Int direction, bool beSafe = false){
-        ConnectCaveWall(worldGrid, newLeftPosition, leftPosition, rightPosition, beSafe);
-        leftPosition = newLeftPosition;
-        ConnectCaveWall(worldGrid, newRightPosition, rightPosition, leftPosition, beSafe);
-        rightPosition = newRightPosition;
+    private void TakeCaveStep(BlockType[,] worldGrid, VectorPair newPositions, Vector2Int direction, bool beSafe = false){
+        ConnectCaveWall(worldGrid, newPositions, false, beSafe);
+        ConnectCaveWall(worldGrid, newPositions, true, beSafe);
         centerPosition += direction;
     }
-    private static void ConnectCaveWall(BlockType[,] worldGrid, Vector2Int newPosition, Vector2Int currentPosition, Vector2Int otherWallPosition, bool beSafe){
-        Action<Vector2Int> fillAction = beSafe ? caveInsidePosition => {
-            MakeCaveWallSafe(worldGrid, caveInsidePosition);
-            MakeCaveWallSafe(worldGrid, caveInsidePosition+Vector2Int.up);
-        } : caveInsidePosition => {
-            MakeCaveWall(worldGrid, caveInsidePosition);
-            MakeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
-        };
-        FillDiagonal(newPosition, currentPosition, currentWallPosition => {
-            FillDiagonal(currentWallPosition, otherWallPosition, fillAction);
+    private void ConnectCaveWall(BlockType[,] worldGrid, VectorPair newPositions, bool isRight, bool beSafe){
+        Action<BlockType[,], Vector2Int> makeCaveWall = beSafe ? MakeCaveWallSafe : MakeCaveWall;
+        FillDiagonal(newPositions.Get(isRight), wallPositions.Get(isRight), currentWallPosition => {
+            FillDiagonal(currentWallPosition, wallPositions.Get(!isRight), caveInsidePosition => {
+                makeCaveWall(worldGrid, caveInsidePosition);
+                makeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
+            });
         });
+        wallPositions.Set(isRight, newPositions.Get(isRight));
     }
     private static void FillDiagonal(Vector2Int inclusiveEnd, Vector2Int exclusiveEnd, Action<Vector2Int> fillAction){
         Vector2Int difference = exclusiveEnd-inclusiveEnd;
@@ -187,5 +188,21 @@ public class Caves : GenerationStep {
     }
     private static Vector2Int Swizzle(Vector2Int vector){
         return new Vector2Int(vector.y, vector.x);
+    }
+
+    private struct VectorPair {
+        public Vector2Int Left;
+        public Vector2Int Right;
+
+        public Vector2Int Get(bool isRight){
+            return isRight ? Right : Left;
+        }
+        public void Set(bool isRight, Vector2Int value){
+            if (isRight){
+                Right = value;
+            } else {
+                Left = value;
+            }
+        }
     }
 }
