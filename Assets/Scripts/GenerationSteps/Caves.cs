@@ -29,17 +29,10 @@ public class Caves : GenerationStep {
     private VectorPair wallPositions;
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
-        int leftSpawnEdge, rightSpawnEdge;
-        if (doSpawnOnSurface){
-            leftSpawnEdge = worldSize.LeftBeachEdge;
-            rightSpawnEdge = worldSize.RightBeachEdge;
-        } else {
-            leftSpawnEdge = 0;
-            rightSpawnEdge = elevations.Length;
-        }
-        int numberOfCaves = Mathf.RoundToInt((rightSpawnEdge-leftSpawnEdge)/worldWidthPerCave.Value);
+        (int, int) spawnEdges = doSpawnOnSurface ? (worldSize.LeftBeachEdge, worldSize.RightBeachEdge) : (0, elevations.Length);
+        int numberOfCaves = Mathf.RoundToInt((spawnEdges.Item2-spawnEdges.Item1)/worldWidthPerCave.Value);
         for (int i = 0; i < numberOfCaves; i++){
-            GenerateCave(worldGrid, elevations, worldSize, seed, Random.Range(leftSpawnEdge, rightSpawnEdge));
+            GenerateCave(worldGrid, elevations, worldSize, seed, Random.Range(spawnEdges.Item1, spawnEdges.Item2));
         }
         return 1;
     }
