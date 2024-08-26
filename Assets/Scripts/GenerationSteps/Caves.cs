@@ -96,21 +96,19 @@ public class Caves : GenerationStep {
     private VectorPair CalculateNewWallPositions(long seed, int step, Vector2Int direction, float radiusScale = 1){
         VectorPair newPositions;
         // The left and right walls use different seeds since they should be fully independent of each other.
-        newPositions.Left = centerPosition+CalculateWallOffset(seed, step, direction, radiusScale);
-        newPositions.Right = centerPosition-CalculateWallOffset(seed+1, step, direction, radiusScale);
+        newPositions.Left = centerPosition+CalculateWallOffset(seed, step, direction, radiusScale, false);
+        newPositions.Right = centerPosition+CalculateWallOffset(seed+1, step, direction, radiusScale, true);
         return newPositions;
     }
-    private Vector2Int CalculateWallOffset(long seed, int step, Vector2Int direction, float radiusScale){
+    private Vector2Int CalculateWallOffset(long seed, int step, Vector2Int direction, float radiusScale, bool isRight){
+        Vector2Int perpendicular = (isRight ? -1 : +1)*Perpendicular(direction);
         float noise = OpenSimplex2S.Noise2(seed, step*noiseRoughness, 0);
         float scaledRadius = (averageRadius + maxRadiusVariance*noise*Math.Abs(noise))*radiusScale;
         if (direction.sqrMagnitude == 1){
-            return Mathf.RoundToInt(scaledRadius)*Perpendicular(direction);
+            return Mathf.RoundToInt(scaledRadius)*perpendicular;
         }
         int diagonalHalfSteps = Mathf.RoundToInt(scaledRadius*2/direction.magnitude);
-        if (diagonalHalfSteps%2 != 0){
-            return (diagonalHalfSteps+1)/2*Perpendicular(direction)+new Vector2Int(direction.x, 0);
-        }
-        return diagonalHalfSteps/2*Perpendicular(direction);
+        return diagonalHalfSteps/2*perpendicular + (diagonalHalfSteps%2 != 0 ? (perpendicular+direction)/2 : Vector2Int.zero);
     }
     
     private void TakeCaveStep(BlockType[,] worldGrid, VectorPair newPositions, Vector2Int direction, bool beSafe = false){
