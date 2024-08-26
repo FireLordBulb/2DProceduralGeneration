@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
@@ -72,6 +73,12 @@ public class WorldGenerator : MonoBehaviour {
                     Debug.LogError($"{blockType} has no matching tile!");
                 }
             }
+        }
+    }
+    
+    private void Update(){
+        if (Input.GetKeyDown(KeyCode.R)){
+            SceneManager.LoadScene(gameObject.scene.name);
         }
     }
 }
