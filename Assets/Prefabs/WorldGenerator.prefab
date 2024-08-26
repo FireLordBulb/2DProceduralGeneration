@@ -44,6 +44,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7a93c9a8702309458977c55b2326445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  reloadAction:
+    m_Name: Reload
+    m_Type: 1
+    m_ExpectedControlType: Button
+    m_Id: 416de103-eca7-4b8c-8ecf-d89673370ee3
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 1e12929a-c2ec-45fb-802c-74b4b72c90f8
+      m_Path: <Keyboard>/r
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Reload
+      m_Flags: 0
+    m_Flags: 0
   grid: {fileID: 7756013290205675089, guid: f718705757d1b534d9c4cbec41df4918, type: 3}
   blockTilePairs:
   - block: 0

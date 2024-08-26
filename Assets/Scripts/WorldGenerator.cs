@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour {
     public const int X = 0, Y = 1;
 
+    [SerializeField] private InputAction reloadAction;
     [SerializeField] private Grid grid;
     [SerializeField] private List<BlockTilePair> blockTilePairs;
     [SerializeField] private bool useRandomSeed;
@@ -21,14 +23,29 @@ public class WorldGenerator : MonoBehaviour {
     private BlockType[,] worldGrid;
     private int[] elevations;
     private Seed seedReference;
-
+    private Tilemap tilemap;
+    private bool isGenerating;
+    
     private void Awake(){
         blockTilePairs.ForEach(pair => tileDictionary.Add(pair.block, pair.tile));
+        grid = Instantiate(grid);
+        tilemap = grid.GetComponentInChildren<Tilemap>();
     }
+    
     private void Start(){
         GenerateWorld();
+        reloadAction.performed += _ => {
+            if (isGenerating){
+                return;
+            }
+            isGenerating = true;
+            tilemap.ClearAllTiles();
+            GenerateWorld();
+        };
+        reloadAction.Enable();
     }
-    private void GenerateWorld(){
+    
+    private async void GenerateWorld(){
         if (useRandomSeed){
             byte[] longBytes = new byte[sizeof(long)];
             new System.Random().NextBytes(longBytes);
@@ -55,14 +72,14 @@ public class WorldGenerator : MonoBehaviour {
                 stepProgress = generationStep.Perform(worldGrid, elevations, worldSize, seedReference);
                 generationProgressCompleted += (stepProgress - previousStepProgress)*generationStep.RelativeTimeToPerform;
                 print($"Progress: {generationProgressCompleted/generationProgressNeeded}");
+                // Yield to let the print actually get written to console.
+                await Task.Yield();
             }
             // Pass a different seed to each step to ensure each step has unique random noise.
-            seedReference.Increment();
+            seedReference.Increment(); 
         }
-        grid = Instantiate(grid);
-        Tilemap tilemap = grid.GetComponentInChildren<Tilemap>();
-        for (int x = worldGrid.GetLength(X)-1; x >= 0; x--){
-            for (int y = worldGrid.GetLength(Y)-1; y >= 0; y--){
+        for (int x = worldSize.width-1; x >= 0; x--){
+            for (int y = worldSize.height-1; y >= 0; y--){
                 BlockType blockType = worldGrid[x, y];
                 if (tileDictionary.TryGetValue(blockType, out Tile tile)){
                     // A blockType with a null tile means don't put any tile at this location.
@@ -74,12 +91,9 @@ public class WorldGenerator : MonoBehaviour {
                 }
             }
         }
-    }
-    
-    private void Update(){
-        if (Input.GetKeyDown(KeyCode.R)){
-            SceneManager.LoadScene(gameObject.scene.name);
-        }
+        // Accept all input made during the lag spike caused by the above double for-loop while isGenerating is still true so they don't do anything.
+        await Task.Yield();
+        isGenerating = false;
     }
 }
 
