@@ -118,10 +118,13 @@ public class Caves : GenerationStep {
     }
     private void ConnectCaveWall(BlockType[,] worldGrid, VectorPair newPositions, bool isRight, bool beSafe){
         Action<BlockType[,], Vector2Int> makeCaveWall = beSafe ? MakeCaveWallSafe : MakeCaveWall;
+        Vector2Int otherWallPosition = wallPositions.Get(!isRight);
         FillDiagonal(newPositions.Get(isRight), wallPositions.Get(isRight), currentWallPosition => {
-            FillDiagonal(currentWallPosition, wallPositions.Get(!isRight), caveInsidePosition => {
+            FillDiagonal(currentWallPosition, otherWallPosition, caveInsidePosition => {
                 makeCaveWall(worldGrid, caveInsidePosition);
-                makeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
+                if (caveInsidePosition != currentWallPosition || currentWallPosition.y < otherWallPosition.y){
+                    makeCaveWall(worldGrid, caveInsidePosition+Vector2Int.up);
+                }
             });
         });
         wallPositions.Set(isRight, newPositions.Get(isRight));
