@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7a93c9a8702309458977c55b2326445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  columnsPerFrame: 100
   reloadAction:
     m_Name: Reload
     m_Type: 1
@@ -81,7 +82,7 @@ MonoBehaviour:
     tile: {fileID: 11400000, guid: 47941dafa3c52c7428b308df795d5bb6, type: 2}
   - block: 8
     tile: {fileID: 11400000, guid: b343f89b4637a9f4ebba079850929597, type: 2}
-  useRandomSeed: 0
+  useRandomSeed: 1
   seed: 526169754230076738
   worldSizeName: Medium
   worldSizes:

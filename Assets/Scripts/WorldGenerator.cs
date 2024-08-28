@@ -9,7 +9,8 @@ using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour {
     public const int X = 0, Y = 1;
-
+    [Range(10, 500)]
+    [SerializeField] private int columnsPerFrame;
     [SerializeField] private InputAction reloadAction;
     [SerializeField] private Grid grid;
     [SerializeField] private List<BlockTilePair> blockTilePairs;
@@ -72,8 +73,8 @@ public class WorldGenerator : MonoBehaviour {
                 stepProgress = generationStep.Perform(worldGrid, elevations, worldSize, seedReference);
                 generationProgressCompleted += (stepProgress - previousStepProgress)*generationStep.RelativeTimeToPerform;
                 print($"Progress: {generationProgressCompleted/generationProgressNeeded}");
-                // Yield to let the print actually get written to console.
-                await Task.Yield();
+                // Wait a bit to let the print actually get written to console.
+                await Task.Delay(70);
             }
             // Pass a different seed to each step to ensure each step has unique random noise.
             seedReference.Increment(); 
@@ -89,6 +90,9 @@ public class WorldGenerator : MonoBehaviour {
                 } else {
                     Debug.LogError($"{blockType} has no matching tile!");
                 }
+            }
+            if (x%columnsPerFrame == 0){
+                await Task.Yield();
             }
         }
         // Accept all input made during the lag spike caused by the above double for-loop while isGenerating is still true so they don't do anything.
