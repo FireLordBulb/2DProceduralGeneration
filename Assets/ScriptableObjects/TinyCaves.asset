@@ -28,5 +28,6 @@ MonoBehaviour:
   maxRadiusVariance: 2.5
   noiseRoughness: 0.1
   keepDirectionWeight: 0.8
-  keepSidewaysDirectionWeight: 0.7
+  keepSidewaysDirectionWeight: 0.8
   upwardsWeight: 0.5
+  straightDownWeight: 0.5

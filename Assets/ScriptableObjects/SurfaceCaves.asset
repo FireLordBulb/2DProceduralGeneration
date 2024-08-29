@@ -26,7 +26,8 @@ MonoBehaviour:
   maxAirBlocks: 10
   averageRadius: 6
   maxRadiusVariance: 5
-  noiseRoughness: 0.15
+  noiseRoughness: 0.1
   keepDirectionWeight: 0.8
   keepSidewaysDirectionWeight: 0.8
   upwardsWeight: 0.2
+  straightDownWeight: 0.5

@@ -21,6 +21,8 @@ public class Caves : GenerationStep {
     [SerializeField] private float keepSidewaysDirectionWeight;
     [Range(0, 1)]
     [SerializeField] private float upwardsWeight;
+    [Range(0, 1)]
+    [SerializeField] private float straightDownWeight;
 
     private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Water, BlockType.Sand};
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
@@ -52,7 +54,7 @@ public class Caves : GenerationStep {
             centerPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
         }
         // Creates the cave opening before the cave proper starts.
-        centerPosition = wallPositions.Left = wallPositions.Right = centerPosition-radius*direction;
+        wallPositions.Left = wallPositions.Right = centerPosition -= radius*direction;
         GenerateCaveEnd(worldGrid, seed, direction, -radius, 0);
         // The cave proper.
         int step, airBlockCount = 0, directionIndex = Array.FindIndex(Directions, vector => vector == direction);
@@ -170,7 +172,11 @@ public class Caves : GenerationStep {
             return rightIndex;
         }
         float weightedMiddlePoint = 0.5f;
-        if (0 < Directions[leftIndex].y){
+        if (Directions[leftIndex] == Vector2Int.down){
+            weightedMiddlePoint = straightDownWeight;
+        } else if (Directions[rightIndex] == Vector2Int.down){
+            weightedMiddlePoint = 1-straightDownWeight;
+        } else if (0 < Directions[leftIndex].y){
             weightedMiddlePoint = upwardsWeight;
         } else if (0 < Directions[rightIndex].y){
             weightedMiddlePoint = 1-upwardsWeight;

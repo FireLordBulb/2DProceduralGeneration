@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
   worldWidthPerCave:
-    min: 200
-    max: 300
+    min: 300
+    max: 400
   doSpawnOnSurface: 0
   startingDepthFraction:
     min: 0.05
@@ -26,7 +26,8 @@ MonoBehaviour:
   maxAirBlocks: 10
   averageRadius: 6
   maxRadiusVariance: 5
-  noiseRoughness: 0.15
+  noiseRoughness: 0.1
   keepDirectionWeight: 0.8
   keepSidewaysDirectionWeight: 0.8
   upwardsWeight: 0.2
+  straightDownWeight: 0.5
