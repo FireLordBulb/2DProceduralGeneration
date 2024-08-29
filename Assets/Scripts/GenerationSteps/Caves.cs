@@ -29,13 +29,14 @@ public class Caves : GenerationStep {
     private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Water, BlockType.Sand};
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
 
+    private Stack<Cave> caves;
     private Vector2Int centerPosition;
     private VectorPair wallPositions;
     
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         (int, int) spawnEdges = doSpawnOnSurface ? (worldSize.LeftBeachEdge, worldSize.RightBeachEdge) : (0, elevations.Length);
         int numberOfCaves = Mathf.RoundToInt((spawnEdges.Item2-spawnEdges.Item1)/worldWidthPerCave.Value);
-        Stack<Cave> caves = new(numberOfCaves);
+        caves = new Stack<Cave>(numberOfCaves);
         int minSpawnSquareDistance = Mathf.CeilToInt(minSpawnDistance*minSpawnDistance);
         for (int i = 0; i < numberOfCaves; i++){
             Cave cave = new();
