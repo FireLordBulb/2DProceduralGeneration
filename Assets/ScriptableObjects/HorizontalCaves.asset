@@ -16,6 +16,7 @@ MonoBehaviour:
   worldWidthPerCave:
     min: 200
     max: 300
+  minSpawnDistance: 100
   doSpawnOnSurface: 0
   startingDepthFraction:
     min: 0.15

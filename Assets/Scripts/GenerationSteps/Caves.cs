@@ -7,6 +7,7 @@ using Random = UnityEngine.Random;
 [CreateAssetMenu(menuName = "GenerationSteps/Caves", fileName = "Caves")]
 public class Caves : GenerationStep {
     [SerializeField] private RandomFloatRange worldWidthPerCave;
+    [SerializeField] private float minSpawnDistance;
     [SerializeField] private bool doSpawnOnSurface;
     [SerializeField] private RandomFloatRange startingDepthFraction;
     [SerializeField] private RandomFloatRange lengthScalar;
@@ -34,11 +35,15 @@ public class Caves : GenerationStep {
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         (int, int) spawnEdges = doSpawnOnSurface ? (worldSize.LeftBeachEdge, worldSize.RightBeachEdge) : (0, elevations.Length);
         int numberOfCaves = Mathf.RoundToInt((spawnEdges.Item2-spawnEdges.Item1)/worldWidthPerCave.Value);
-        Stack<Cave> caveSpawns = new(numberOfCaves);
+        Stack<Cave> caves = new(numberOfCaves);
+        int minSpawnSquareDistance = Mathf.CeilToInt(minSpawnDistance*minSpawnDistance);
         for (int i = 0; i < numberOfCaves; i++){
             Cave cave = new();
-            int spawnX = Random.Range(spawnEdges.Item1, spawnEdges.Item2);
-            cave.StartPosition = new Vector2Int(spawnX, elevations[spawnX]);
+            int spawnX;
+            do {
+                spawnX = Random.Range(spawnEdges.Item1, spawnEdges.Item2);
+                cave.StartPosition = new Vector2Int(spawnX, elevations[spawnX]);
+            } while (0 < minSpawnDistance && caves.Any(otherCave => (otherCave.StartPosition-cave.StartPosition).sqrMagnitude < minSpawnSquareDistance));
             cave.WalkMaxSteps = Mathf.RoundToInt(lengthScalar.Value*worldSize.height);
             if (doSpawnOnSurface){
                 Vector2Int surfaceTangent = new(-1 - +1, elevations[spawnX-1]-elevations[spawnX+1]);
@@ -49,10 +54,10 @@ public class Caves : GenerationStep {
                 cave.StartDirection = Directions[Random.Range(0, Directions.Length)];
                 cave.StartPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
             }
-            caveSpawns.Push(cave);
+            caves.Push(cave);
         }
-        while (0 < caveSpawns.Count){
-            Cave cave = caveSpawns.Pop();
+        while (0 < caves.Count){
+            Cave cave = caves.Pop();
             GenerateCave(worldGrid, seed, cave);
         }
         return 1;
