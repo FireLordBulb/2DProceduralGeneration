@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -33,32 +34,39 @@ public class Caves : GenerationStep {
     public override float Perform(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed){
         (int, int) spawnEdges = doSpawnOnSurface ? (worldSize.LeftBeachEdge, worldSize.RightBeachEdge) : (0, elevations.Length);
         int numberOfCaves = Mathf.RoundToInt((spawnEdges.Item2-spawnEdges.Item1)/worldWidthPerCave.Value);
+        Stack<Cave> caveSpawns = new(numberOfCaves);
         for (int i = 0; i < numberOfCaves; i++){
-            GenerateCave(worldGrid, elevations, worldSize, seed, Random.Range(spawnEdges.Item1, spawnEdges.Item2));
+            Cave cave = new();
+            int spawnX = Random.Range(spawnEdges.Item1, spawnEdges.Item2);
+            cave.StartPosition = new Vector2Int(spawnX, elevations[spawnX]);
+            cave.WalkMaxSteps = Mathf.RoundToInt(lengthScalar.Value*worldSize.height);
+            if (doSpawnOnSurface){
+                Vector2Int surfaceTangent = new(-1 - +1, elevations[spawnX-1]-elevations[spawnX+1]);
+                // Reduces the surface tangent to one of the 8 cardinal/ordinal directions.
+                surfaceTangent /= Math.Max(Math.Abs(surfaceTangent.x), Math.Abs(surfaceTangent.y));
+                cave.StartDirection = Perpendicular(surfaceTangent);
+            } else {
+                cave.StartDirection = Directions[Random.Range(0, Directions.Length)];
+                cave.StartPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
+            }
+            caveSpawns.Push(cave);
+        }
+        while (0 < caveSpawns.Count){
+            Cave cave = caveSpawns.Pop();
+            GenerateCave(worldGrid, seed, cave);
         }
         return 1;
     }
 
-    private void GenerateCave(BlockType[,] worldGrid, int[] elevations, WorldSize worldSize, Seed seed, int startX){
-        centerPosition = new Vector2Int(startX, elevations[startX]);
-        int walkMaxSteps = Mathf.RoundToInt(lengthScalar.Value*worldSize.height);
+    private void GenerateCave(BlockType[,] worldGrid, Seed seed, Cave cave){
         int radius = Mathf.RoundToInt(averageRadius);
-        Vector2Int direction;
-        if (doSpawnOnSurface){
-            Vector2Int surfaceTangent = new(-1 - +1, elevations[startX-1]-elevations[startX+1]);
-            // Reduces the surface tangent to one of the 8 cardinal/ordinal directions.
-            surfaceTangent /= Math.Max(Math.Abs(surfaceTangent.x), Math.Abs(surfaceTangent.y));
-            direction = Perpendicular(surfaceTangent);
-        } else {
-            direction = Directions[Random.Range(0, Directions.Length)];
-            centerPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
-        }
+        Vector2Int direction = cave.StartDirection;
         // Creates the cave opening before the cave proper starts.
-        wallPositions.Left = wallPositions.Right = centerPosition -= radius*direction;
+        wallPositions.Left = wallPositions.Right = centerPosition = cave.StartPosition-radius*direction;
         GenerateCaveEnd(worldGrid, seed, direction, -radius, 0);
         // The cave proper.
         int step, airBlockCount = 0, directionIndex = Array.FindIndex(Directions, vector => vector == direction);
-        for (step = 0; step < walkMaxSteps; step++){
+        for (step = 0; step < cave.WalkMaxSteps; step++){
             VectorPair newPositions = CalculateNewWallPositions(seed, step, direction);
             if (IsOffGrid(worldGrid, newPositions.Left) || IsOffGrid(worldGrid, newPositions.Right)){
                 break;
@@ -196,6 +204,12 @@ public class Caves : GenerationStep {
         return new Vector2Int(vector.y, vector.x);
     }
 
+    private struct Cave {
+        public Vector2Int StartPosition;
+        public Vector2Int StartDirection;
+        public int WalkMaxSteps;
+    }
+    
     private struct VectorPair {
         public Vector2Int Left;
         public Vector2Int Right;
