@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eb03688adb1e448b961eb60c70bb989c, type: 3}
-  m_Name: SurfaceCaves
+  m_Name: RegularCaves
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
   worldWidthPerCave:
-    min: 160
-    max: 240
-  doSpawnOnSurface: 1
+    min: 200
+    max: 300
+  doSpawnOnSurface: 0
   startingDepthFraction:
-    min: 0
-    max: 0
+    min: 0.05
+    max: 0.5
   lengthScalar:
     min: 0.6
     max: 1.4
