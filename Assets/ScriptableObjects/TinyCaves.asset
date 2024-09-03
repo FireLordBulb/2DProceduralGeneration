@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
   worldWidthPerCave:
-    min: 75
-    max: 100
+    min: 200
+    max: 250
   minSpawnDistance: 0
   doSpawnOnSurface: 0
   downFromSurfaceStickyDirectionSteps: 0
@@ -24,12 +24,19 @@ MonoBehaviour:
     max: 0.75
   lengthScalar:
     min: 0.3
-    max: 0.6
+    max: 0.5
   maxAirBlocks: 10
-  averageRadius: 1
-  maxRadiusVariance: 2.5
+  averageRadius: 1.5
+  maxRadiusVariance: 4
   noiseRoughness: 0.1
-  keepDirectionWeight: 0.8
-  keepSidewaysDirectionWeight: 0.8
+  keepDirectionWeight: 0.85
+  keepSidewaysDirectionWeight: 0.85
   upwardsWeight: 0.5
   straightDownWeight: 0.5
+  doBranch: 1
+  branchChance: 0.2
+  minBranchStep: 0
+  stepsBetweenBranches:
+    min: 40
+    max: 60
+  branchStickyDirectionSteps: 80

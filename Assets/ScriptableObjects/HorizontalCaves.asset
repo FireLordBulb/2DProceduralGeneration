@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
   worldWidthPerCave:
-    min: 200
-    max: 300
+    min: 400
+    max: 500
   minSpawnDistance: 100
   doSpawnOnSurface: 0
   downFromSurfaceStickyDirectionSteps: 0
@@ -33,3 +33,10 @@ MonoBehaviour:
   keepSidewaysDirectionWeight: 0.95
   upwardsWeight: 0.5
   straightDownWeight: 0
+  doBranch: 0
+  branchChance: 0
+  minBranchStep: 0
+  stepsBetweenBranches:
+    min: 0
+    max: 0
+  branchStickyDirectionSteps: 0

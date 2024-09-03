@@ -15,7 +15,7 @@ MonoBehaviour:
   relativeTimeToPerform: 1
   worldWidthPerCave:
     min: 400
-    max: 500
+    max: 600
   minSpawnDistance: 100
   doSpawnOnSurface: 0
   downFromSurfaceStickyDirectionSteps: 0
@@ -27,16 +27,16 @@ MonoBehaviour:
     max: 1
   maxAirBlocks: 10
   averageRadius: 6
-  maxRadiusVariance: 5
+  maxRadiusVariance: 7
   noiseRoughness: 0.1
   keepDirectionWeight: 0.8
   keepSidewaysDirectionWeight: 0.8
   upwardsWeight: 0.2
   straightDownWeight: 0.5
-  doBranch: 0
-  branchChance: 0
+  doBranch: 1
+  branchChance: 0.3
   minBranchStep: 0
   stepsBetweenBranches:
-    min: 0
-    max: 0
-  branchStickyDirectionSteps: 0
+    min: 70
+    max: 200
+  branchStickyDirectionSteps: 80
