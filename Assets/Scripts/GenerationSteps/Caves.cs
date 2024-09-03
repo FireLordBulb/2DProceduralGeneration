@@ -26,7 +26,14 @@ public class Caves : GenerationStep {
     [SerializeField] private float upwardsWeight;
     [Range(0, 1)]
     [SerializeField] private float straightDownWeight;
-
+    [Header("Branching")]
+    [SerializeField] private bool doBranch;
+    [Range(0, 1)]
+    [SerializeField] private float branchChance;
+    [SerializeField] private int minBranchStep;
+    [SerializeField] private RandomFloatRange stepsBetweenBranches;
+    [SerializeField] private int branchStickyDirectionSteps;
+    
     private const int StickyDirectionMaxTurn = 1;
     private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Water, BlockType.Sand, BlockType.SandWall};
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
@@ -62,18 +69,19 @@ public class Caves : GenerationStep {
         }
         while (0 < caves.Count){
             Cave cave = caves.Pop();
-            GenerateCave(worldGrid, seed, cave);
+            GenerateCave(worldGrid, worldSize.height, seed, cave);
         }
         return 1;
     }
 
-    private void GenerateCave(BlockType[,] worldGrid, Seed seed, Cave cave){
+    private void GenerateCave(BlockType[,] worldGrid, int worldHeight, Seed seed, Cave cave){
         int radius = Mathf.RoundToInt(averageRadius);
         Vector2Int direction = cave.StartDirection;
         // Creates the cave opening before the cave proper starts.
         wallPositions.Left = wallPositions.Right = centerPosition = cave.StartPosition-radius*direction;
         GenerateCaveEnd(worldGrid, seed, direction, -radius, 0);
         // The cave proper.
+        int branchStep = doBranch ? minBranchStep+(int)stepsBetweenBranches.Value : -1;
         int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
         int stickyDirectionStepsLeft = cave.StickyDirectionSteps;
         int stickyDirectionIndex = directionIndex;
@@ -91,6 +99,23 @@ public class Caves : GenerationStep {
             }
             TakeCaveStep(worldGrid, newPositions, direction);
 
+            if (step == branchStep){
+                branchStep = step+(int)stepsBetweenBranches.Value;
+                if (Random.value < branchChance){
+                    int randomSign = Random.Range(0, 2)*2-1;
+                    Vector2Int branchDirection = randomSign*Perpendicular(direction);
+                    caves.Push(new Cave {
+                        StartPosition = centerPosition, 
+                        // If the chosen perpendicular goes straight up, use the other perpendicular (straight down).
+                        StartDirection = branchDirection == Vector2Int.up ? Vector2Int.down : branchDirection,
+                        WalkMaxSteps = Mathf.RoundToInt(Random.Range(0, lengthScalar.Max*worldHeight-step)),
+                        StickyDirectionSteps = branchStickyDirectionSteps
+                    });
+                    stickyDirectionStepsLeft = branchStickyDirectionSteps;
+                    stickyDirectionIndex = directionIndex;
+                }
+            }
+            
             if (0 < stickyDirectionStepsLeft){
                 stickyDirectionStepsLeft--;
             }

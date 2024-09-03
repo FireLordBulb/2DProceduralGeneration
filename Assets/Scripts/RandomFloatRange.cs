@@ -7,4 +7,5 @@ public struct RandomFloatRange {
     [SerializeField] private float min, max;
 
     public float Value => min+(max-min)*Random.value;
+    public float Max => max;
 }
