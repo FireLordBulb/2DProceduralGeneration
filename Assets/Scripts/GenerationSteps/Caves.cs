@@ -27,6 +27,7 @@ public class Caves : GenerationStep {
     [SerializeField] private float straightDownWeight;
 
     private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Water, BlockType.Sand};
+    private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Water, BlockType.Sand, BlockType.SandWall};
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
 
     private Stack<Cave> caves;
