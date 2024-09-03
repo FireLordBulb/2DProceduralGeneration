@@ -88,7 +88,7 @@ public class Caves : GenerationStep {
         int step, airBlockCount = 0;
         for (step = 0; step < cave.WalkMaxSteps; step++){
             VectorPair newPositions = CalculateNewWallPositions(seed, step, direction);
-            if (IsOffGrid(worldGrid, newPositions.Left) || IsOffGrid(worldGrid, newPositions.Right)){
+            if (IsOffGrid(worldGrid, newPositions.Left) || IsOffGrid(worldGrid, newPositions.Right) || IsOffGrid(worldGrid, centerPosition)){
                 break;
             }
             if (CaveBreakingBlocks.Contains(worldGrid[centerPosition.x, centerPosition.y])){
