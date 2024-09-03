@@ -9,6 +9,7 @@ public class Caves : GenerationStep {
     [SerializeField] private RandomFloatRange worldWidthPerCave;
     [SerializeField] private float minSpawnDistance;
     [SerializeField] private bool doSpawnOnSurface;
+    [SerializeField] private int downFromSurfaceStickyDirectionSteps;
     [SerializeField] private RandomFloatRange startingDepthFraction;
     [SerializeField] private RandomFloatRange lengthScalar;
     [SerializeField] private int maxAirBlocks;
@@ -26,7 +27,7 @@ public class Caves : GenerationStep {
     [Range(0, 1)]
     [SerializeField] private float straightDownWeight;
 
-    private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Water, BlockType.Sand};
+    private const int StickyDirectionMaxTurn = 1;
     private static readonly BlockType[] CaveBreakingBlocks = {BlockType.Water, BlockType.Sand, BlockType.SandWall};
     private static readonly Vector2Int[] Directions = {new(-1, +1), Vector2Int.left, new(-1, -1), Vector2Int.down, new(+1, -1), Vector2Int.right, new(+1, +1)};
 
@@ -52,6 +53,7 @@ public class Caves : GenerationStep {
                 // Reduces the surface tangent to one of the 8 cardinal/ordinal directions.
                 surfaceTangent /= Math.Max(Math.Abs(surfaceTangent.x), Math.Abs(surfaceTangent.y));
                 cave.StartDirection = Perpendicular(surfaceTangent);
+                cave.StickyDirectionSteps = downFromSurfaceStickyDirectionSteps;
             } else {
                 cave.StartDirection = Directions[Random.Range(0, Directions.Length)];
                 cave.StartPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
@@ -72,7 +74,10 @@ public class Caves : GenerationStep {
         wallPositions.Left = wallPositions.Right = centerPosition = cave.StartPosition-radius*direction;
         GenerateCaveEnd(worldGrid, seed, direction, -radius, 0);
         // The cave proper.
-        int step, airBlockCount = 0, directionIndex = Array.FindIndex(Directions, vector => vector == direction);
+        int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
+        int stickyDirectionStepsLeft = cave.StickyDirectionSteps;
+        int stickyDirectionIndex = directionIndex;
+        int step, airBlockCount = 0;
         for (step = 0; step < cave.WalkMaxSteps; step++){
             VectorPair newPositions = CalculateNewWallPositions(seed, step, direction);
             if (IsOffGrid(worldGrid, newPositions.Left) || IsOffGrid(worldGrid, newPositions.Right)){
@@ -86,11 +91,18 @@ public class Caves : GenerationStep {
             }
             TakeCaveStep(worldGrid, newPositions, direction);
 
+            if (0 < stickyDirectionStepsLeft){
+                stickyDirectionStepsLeft--;
+            }
             float weight = direction.y == 0 ? keepSidewaysDirectionWeight : keepDirectionWeight;
             if (Random.value < weight){
                 continue;
             }
-            directionIndex = GetNewDirectionIndex(directionIndex);
+            int newDirectionIndex = GetNewDirectionIndex(directionIndex);
+            if (0 < stickyDirectionStepsLeft && StickyDirectionMaxTurn < Math.Abs(newDirectionIndex-stickyDirectionIndex)){
+                continue;
+            }
+            directionIndex = newDirectionIndex;
             direction = Directions[directionIndex];
         }
         // Creates the cave end after the cave proper ends.
@@ -215,6 +227,7 @@ public class Caves : GenerationStep {
         public Vector2Int StartPosition;
         public Vector2Int StartDirection;
         public int WalkMaxSteps;
+        public int StickyDirectionSteps;
     }
     
     private struct VectorPair {

@@ -18,6 +18,7 @@ MonoBehaviour:
     max: 100
   minSpawnDistance: 0
   doSpawnOnSurface: 0
+  downFromSurfaceStickyDirectionSteps: 0
   startingDepthFraction:
     min: 0
     max: 0.75

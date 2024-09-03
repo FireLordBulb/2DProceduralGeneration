@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   relativeTimeToPerform: 1
   worldWidthPerCave:
-    min: 160
+    min: 200
     max: 240
   minSpawnDistance: 50
   doSpawnOnSurface: 1
+  downFromSurfaceStickyDirectionSteps: 30
   startingDepthFraction:
     min: 0
     max: 0
