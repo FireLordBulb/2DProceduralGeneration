@@ -72,7 +72,7 @@ public class WorldGenerator : MonoBehaviour {
                 float previousStepProgress = stepProgress;
                 stepProgress = generationStep.Perform(worldGrid, elevations, worldSize, seedReference);
                 generationProgressCompleted += (stepProgress - previousStepProgress)*generationStep.RelativeTimeToPerform;
-                print($"Progress: {generationProgressCompleted/generationProgressNeeded}");
+                print($"Progress: {(int)(1000*generationProgressCompleted/generationProgressNeeded)/10f}%");
                 // Wait a bit to let the print actually get written to console.
                 await Task.Delay(70);
             }
