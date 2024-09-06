@@ -83,6 +83,9 @@ public class Caves : GenerationStep {
         while (0 < caves.Count){
             Cave cave = caves.Pop();
             GenerateCave(cave);
+            // Have to increment seed twice since a cave uses both seed and seed+1.
+            seed.Increment();
+            seed.Increment();
         }
         return 1;
     }
@@ -93,6 +96,10 @@ public class Caves : GenerationStep {
         // Creates the cave opening before the cave proper starts.
         wallPositions.Left = wallPositions.Right = centerPosition = cave.StartPosition-radius*direction;
         GenerateCaveEnd(-radius, 0);
+        // If the cave opening is already off grid, don't bother with the cave proper or cave end.
+        if (IsOffGrid(wallPositions.Left) || IsOffGrid(wallPositions.Right) || IsOffGrid(centerPosition)){
+            return;
+        }
         // The cave proper.
         int branchStep = doBranch ? minBranchStep+(int)stepsBetweenBranches.Value : -1;
         int directionIndex = Array.FindIndex(Directions, vector => vector == direction);
@@ -145,9 +152,6 @@ public class Caves : GenerationStep {
         }
         // Creates the cave end after the cave proper ends.
         GenerateCaveEnd(step, step+radius, radius);
-        // Have to increment seed twice since a cave uses both seed and seed+1.
-        seed.Increment();
-        seed.Increment();
     }
 
     // Makes an approximately half-circle-shaped area into cave walls (or air). 
