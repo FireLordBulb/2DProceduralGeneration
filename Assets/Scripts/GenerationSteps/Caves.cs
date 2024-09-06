@@ -63,7 +63,12 @@ public class Caves : GenerationStep {
                 cave.StickyDirectionSteps = downFromSurfaceStickyDirectionSteps;
             } else {
                 cave.StartDirection = Directions[Random.Range(0, Directions.Length)];
-                cave.StartPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*worldSize.height);
+                cave.StartPosition.y -= Mathf.RoundToInt(startingDepthFraction.Value*cave.StartPosition.y);
+            }
+            // Retry if cave is spawned on a disallowed block.
+            if (CaveBreakingBlocks.Contains(worldGrid[cave.StartPosition.x, cave.StartPosition.y])){
+                i--;
+                continue;
             }
             caves.Push(cave);
         }

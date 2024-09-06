@@ -21,7 +21,7 @@ MonoBehaviour:
   downFromSurfaceStickyDirectionSteps: 0
   startingDepthFraction:
     min: 0.15
-    max: 0.65
+    max: 0.85
   lengthScalar:
     min: 0.8
     max: 1.2
