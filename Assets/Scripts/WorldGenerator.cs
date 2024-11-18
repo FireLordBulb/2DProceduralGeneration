@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -9,13 +10,19 @@ using Random = UnityEngine.Random;
 
 public class WorldGenerator : MonoBehaviour {
     public const int X = 0, Y = 1;
+    
+    [SerializeField] private bool doSaveAsFile;
+    [Space]
+    [SerializeField] private InputAction regenerationInputAction;
+    [Header("Tilemap")]
     [Range(10, 500)]
     [SerializeField] private int columnsPerFrame;
-    [SerializeField] private InputAction reloadAction;
     [SerializeField] private Grid grid;
     [SerializeField] private List<BlockTilePair> blockTilePairs;
+    [Header("Seed")]
     [SerializeField] private bool useRandomSeed;
     [SerializeField] private long seed;
+    [Header("Generation")]
     [SerializeField] private string worldSizeName;
     [SerializeField] private WorldSize[] worldSizes;
     [SerializeField] private GenerationStep[] generationSteps;
@@ -24,18 +31,26 @@ public class WorldGenerator : MonoBehaviour {
     private BlockType[,] worldGrid;
     private int[] elevations;
     private Seed seedReference;
+    
     private Tilemap tilemap;
     private bool isGenerating;
+    private string folderPath;
     
     private void Awake(){
         blockTilePairs.ForEach(pair => tileDictionary.Add(pair.block, pair.tile));
         grid = Instantiate(grid);
         tilemap = grid.GetComponentInChildren<Tilemap>();
+        if (doSaveAsFile){
+           folderPath = $"{Application.dataPath}/../Generated Worlds";
+           if (!Directory.Exists(folderPath)){
+               Directory.CreateDirectory(folderPath);
+           } 
+        }
     }
     
     private void Start(){
         GenerateWorld();
-        reloadAction.performed += _ => {
+        regenerationInputAction.performed += _ => {
             if (isGenerating){
                 return;
             }
@@ -43,7 +58,7 @@ public class WorldGenerator : MonoBehaviour {
             tilemap.ClearAllTiles();
             GenerateWorld();
         };
-        reloadAction.Enable();
+        regenerationInputAction.Enable();
     }
     
     private async void GenerateWorld(){
@@ -79,6 +94,22 @@ public class WorldGenerator : MonoBehaviour {
             // Pass a different seed to each step to ensure each step has unique random noise.
             seedReference.Increment(); 
         }
+
+        if (doSaveAsFile){
+            Texture2D image = new(worldSize.width, worldSize.height);
+            for (int x = worldSize.width-1; x >= 0; x--){
+                for (int y = worldSize.height-1; y >= 0; y--){
+                    BlockType blockType = worldGrid[x, y];
+                    if (tileDictionary.TryGetValue(blockType, out Tile tile)){
+                        image.SetPixel(x, y, tile != null ? tile.color : new Color(0, 0, 0, 0));
+                    } else {
+                        Debug.LogError($"{blockType} has no matching tile!");
+                    }
+                }
+            }
+            await File.WriteAllBytesAsync($"{folderPath}/{worldSizeName}, {seed}.png", image.EncodeToPNG());
+        }
+        
         for (int x = worldSize.width-1; x >= 0; x--){
             for (int y = worldSize.height-1; y >= 0; y--){
                 BlockType blockType = worldGrid[x, y];

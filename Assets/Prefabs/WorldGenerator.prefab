@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7a93c9a8702309458977c55b2326445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  columnsPerFrame: 100
-  reloadAction:
+  doSaveAsFile: 1
+  regenerationInputAction:
     m_Name: Reload
     m_Type: 1
     m_ExpectedControlType: Button
@@ -62,6 +62,7 @@ MonoBehaviour:
       m_Action: Reload
       m_Flags: 0
     m_Flags: 0
+  columnsPerFrame: 100
   grid: {fileID: 7756013290205675089, guid: f718705757d1b534d9c4cbec41df4918, type: 3}
   blockTilePairs:
   - block: 0
