@@ -207,13 +207,19 @@ public class Caves : GenerationStep {
         if (yIsSteeper){
             difference = Swizzle(difference);
         }
-        float length = Math.Abs(difference.x);
-        for (int i = 0; i < length; i++){
-            Vector2Int offset = new(i*Math.Sign(difference.x), Mathf.RoundToInt(difference.y*i/length));
-            if (yIsSteeper){
-                offset = Swizzle(offset);
+        Vector2Int sign = new(Math.Sign(difference.x), Math.Sign(difference.y));
+        Vector2Int absoluteDelta = new(Math.Abs(difference.x), Math.Abs(difference.y));
+        Vector2Int doubleAbsoluteDelta = 2*absoluteDelta;
+        int yOffset = 0;
+        int accumulatedError = doubleAbsoluteDelta.y - absoluteDelta.x;
+        for (int i = 0; i < absoluteDelta.x; i++){
+            Vector2Int offset = new(i*sign.x, yOffset);
+            fillAction(inclusiveEnd + (yIsSteeper ? Swizzle(offset) : offset));
+            if (0 < accumulatedError){
+                yOffset += sign.y;
+                accumulatedError -= doubleAbsoluteDelta.x;
             }
-            fillAction(inclusiveEnd+offset);
+            accumulatedError += doubleAbsoluteDelta.y;
         }
     }
     private void MakeCaveWallSafe(Vector2Int position){
